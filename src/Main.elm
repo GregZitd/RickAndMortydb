@@ -14,6 +14,7 @@ import Element.Background as Background
 import Element.Font as Font
 import Element.Input as Input
 import Element.Border as Border
+import Element.Events as Events
 
 
 --MAIN
@@ -34,7 +35,21 @@ type alias Model =
     , windowSize : Flags
     , route : Route
     , searchBarContent : String
+    , searchResult : SearchResult
+    , lastRequestSent : String
     }
+
+type alias Character =
+    { id : Int
+    , name : String
+    --, status : Status
+    }
+
+
+type Status =
+      Alive
+    | Dead
+    | Unknown
 
 type Route =
       Home
@@ -64,7 +79,10 @@ init flags url key =
             , windowSize = Flags 0 0
             , route = toRoute url
             , searchBarContent = ""
+            , searchResult = NoSearchInitiated
+            , lastRequestSent = ""
             }
+
     in case D.decodeValue decodeFlags flags of
            Ok flagsDecoded ->
                ( { model | device = windowToDevice
@@ -104,6 +122,14 @@ type Msg =
     | UrlRequest Browser.UrlRequest
     | WindowResized Int Int
     | SearchBarChanged String
+    | InitiateSearch
+    | GotSearchResult String (Result Http.Error Character)
+      
+type SearchResult =
+      Failure Http.Error
+    | Loading
+    | Result Character
+    | NoSearchInitiated
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -133,6 +159,44 @@ update msg model =
             ( { model | searchBarContent = content }
             , Cmd.none
             )
+
+        InitiateSearch ->
+            getStuff { model | searchResult = Loading }
+                
+        GotSearchResult responseTo result ->
+            case responseTo == model.lastRequestSent of
+                False ->
+                    ( model, Cmd.none )
+                True ->
+                    case result of
+                        Ok character ->
+                            ( { model | searchResult = Result character  }
+                            , Cmd.none
+                            )
+                        Err err ->
+                            ( { model | searchResult = Failure err }
+                            , Cmd.none
+                            )
+
+            
+getStuff : Model -> ( Model, Cmd Msg )
+getStuff model =
+    let sbr = model.searchBarContent
+        newModel = { model | lastRequestSent = sbr }
+    in ( newModel
+       , Http.get
+           { url = "https://rickandmortyapi.com/api/character/2"
+           , expect = Http.expectJson
+                          (GotSearchResult model.searchBarContent) decodeCharacter
+           }
+       )
+
+decodeCharacter : D.Decoder Character
+decodeCharacter =
+    D.map2 Character
+        ( D.field "id" D.int )
+        ( D.field "name" D.string )
+
 
 --SUBSCRIPTIONS
 
@@ -179,6 +243,7 @@ viewHomePage model =
         ]
         [ viewHeader model
         , viewSearchBar model
+        , viewSearchButton
         ]
 
 viewAboutPage : Model -> Element Msg
@@ -249,6 +314,40 @@ viewSearchBar model =
             }
         ]
 
+viewSearchButton : Element Msg
+viewSearchButton =
+    Input.button
+        [ Border.rounded 20
+        , width <| px 150
+        , height <| px 40
+        , Background.color green
+        , centerX
+        , Font.center
+        , Font.size 20
+        , Font.color black
+        , Font.bold
+        , noFocusShadow
+        , Border.shadow
+            { offset = (2,2)
+            , size = 1
+            , blur = 0
+            , color = rgb255 0 150 150
+            }
+        , focused
+              [ moveRight 2
+              , moveDown 2
+              , Border.shadow
+                  { offset = (0,0)
+                  , size = 0
+                  , blur = 0
+                  , color = green
+                  }
+              ]
+        ]
+        { onPress = Just InitiateSearch
+        , label = text "Search"
+        }
+
 noFocusShadow : Attribute Msg
 noFocusShadow =
     focused
@@ -268,6 +367,9 @@ white = rgb255 255 255 255
 
 orange : Color
 orange = rgb255 255 140 0
+         
+green : Color
+green = rgb255 0 204 204
 
 viewTopBar : Element Msg
 viewTopBar =
@@ -288,7 +390,7 @@ viewTopBarButton url label =
     link
       [ alignRight
       , mouseOver
-            [ Font.color orange
+            [ Font.color green
             ]
       ] <| { url = url
            , label = text label
