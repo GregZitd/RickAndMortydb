@@ -39,6 +39,7 @@ type alias Model =
     , searchBarContent : String
     , searchResult : SearchResult
     , lastRequestSent : String
+    , searchBarFocused : Bool
     }
 
 type alias Character =
@@ -95,6 +96,7 @@ init flags url key =
             , searchBarContent = ""
             , searchResult = NoSearchInitiated
             , lastRequestSent = ""
+            , searchBarFocused = False
             }
 
     in case D.decodeValue decodeFlags flags of
@@ -137,6 +139,9 @@ type Msg =
     | SearchBarChanged String
     | SearchButtonPressed
     | GotSearchResult String (Result Http.Error CharacterRequest)
+    | SearchBarGetsFocus
+    | SearchBarLosesFocus
+    | KeyPress Key
       
 type SearchResult =
       Failure Http.Error
@@ -175,11 +180,7 @@ update msg model =
             )
 
         SearchButtonPressed ->
-            case model.searchBarContent of
-                "" -> ( model, Cmd.none )
-                _ -> ( model, Nav.pushUrl
-                                   model.key
-                                   ( "/search?charname=" ++ model.searchBarContent ) )
+            searchButtonPressed model
     
         GotSearchResult responseTo result ->
             case responseTo == model.lastRequestSent of
@@ -196,7 +197,33 @@ update msg model =
                             , Cmd.none
                             )
 
+        SearchBarGetsFocus ->
+            ( { model | searchBarFocused = True }, Cmd.none )
+
+        SearchBarLosesFocus ->
+            ( { model | searchBarFocused = False }, Cmd.none )
+                
+        KeyPress key ->
+            case key of
+                Enter ->
+                    case model.searchBarFocused of
+                        False ->
+                            ( model, Cmd.none )
+                        True ->
+                            searchButtonPressed model
+                NonEnter ->
+                    ( model, Cmd.none )
+
+
             
+searchButtonPressed : Model -> (Model,Cmd Msg)
+searchButtonPressed model =
+     case model.searchBarContent of
+             "" -> ( model, Cmd.none )
+             _ -> ( model, Nav.pushUrl
+                                model.key
+                                ( "/search?charname=" ++ model.searchBarContent ) )
+
 initiateSearchFromUrl : Model -> (Model,Cmd Msg)
 initiateSearchFromUrl model  =
      case model.route of
@@ -217,7 +244,24 @@ initiateSearchFromUrl model  =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Browser.Events.onResize WindowResized
+    Sub.batch
+        [ Browser.Events.onResize WindowResized
+        , Browser.Events.onKeyPress keyDecoder
+        ]
+
+keyDecoder : D.Decoder Msg
+keyDecoder =
+    D.map toKey ( D.field "key" D.string )
+
+toKey : String -> Msg
+toKey keyValue =
+    case keyValue of
+        "Enter" -> KeyPress Enter
+        _ -> KeyPress NonEnter
+      
+type Key =
+      Enter
+    | NonEnter
 
 --VIEW
 
@@ -226,9 +270,7 @@ view model =
     { title = "Rick and Morty db"
     , body =
         [ layout
-              [ width fill
-              , height fill
-              ] <|
+              [] <|
               column
                   [ Background.color black
                   , width fill
@@ -328,6 +370,8 @@ viewSearchBar model =
             , height fill
             , padding <| (size.height - fontSize) // 2
             , Border.width 0
+            , Events.onFocus SearchBarGetsFocus
+            , Events.onLoseFocus SearchBarLosesFocus
             ]
             { onChange = SearchBarChanged
             , text = model.searchBarContent
@@ -399,7 +443,10 @@ viewTopBar model =
             case model.route of
                 SearchResultsPage _ ->
                     case model.device.class of
-                        Phone -> False
+                        Phone ->
+                            case model.device.orientation of
+                                Portrait -> False
+                                Landscape -> True
                         _ -> True
                 _ -> False
         searchBar : Bool -> Element Msg
@@ -427,11 +474,9 @@ viewTopBar model =
 viewTopBarSearch : Model -> Int -> Element Msg
 viewTopBarSearch model topBarHeight =
     let size =
-            case model.device.class of
-                Phone -> { width = 0, height = 0 }
-                _ -> { width = 400
-                     , height = topBarHeight - 15
-                     }
+            { width = 350
+            , height = topBarHeight - 15
+            }
         fontSize = 20
     in row
         [ Background.color black
@@ -453,6 +498,8 @@ viewTopBarSearch model topBarHeight =
               , padding <| ( size.height - fontSize ) // 2
               , Font.size fontSize
               , Border.rounded 20
+              , Events.onFocus SearchBarGetsFocus
+              , Events.onLoseFocus SearchBarLosesFocus
               ]
               { onChange = SearchBarChanged
               , text = model.searchBarContent

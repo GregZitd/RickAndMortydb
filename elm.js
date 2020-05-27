@@ -11503,6 +11503,7 @@ var $author$project$Main$init = F3(
 			lastRequestSent: '',
 			route: $author$project$Main$toRoute(url),
 			searchBarContent: '',
+			searchBarFocused: false,
 			searchResult: $author$project$Main$NoSearchInitiated,
 			url: url,
 			windowSize: A2($author$project$Main$Flags, 0, 0)
@@ -11525,7 +11526,24 @@ var $author$project$Main$WindowResized = F2(
 	function (a, b) {
 		return {$: 'WindowResized', a: a, b: b};
 	});
-var $elm$browser$Browser$Events$Window = {$: 'Window'};
+var $elm$core$Platform$Sub$batch = _Platform_batch;
+var $author$project$Main$Enter = {$: 'Enter'};
+var $author$project$Main$KeyPress = function (a) {
+	return {$: 'KeyPress', a: a};
+};
+var $author$project$Main$NonEnter = {$: 'NonEnter'};
+var $author$project$Main$toKey = function (keyValue) {
+	if (keyValue === 'Enter') {
+		return $author$project$Main$KeyPress($author$project$Main$Enter);
+	} else {
+		return $author$project$Main$KeyPress($author$project$Main$NonEnter);
+	}
+};
+var $author$project$Main$keyDecoder = A2(
+	$elm$json$Json$Decode$map,
+	$author$project$Main$toKey,
+	A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string));
+var $elm$browser$Browser$Events$Document = {$: 'Document'};
 var $elm$browser$Browser$Events$MySub = F3(
 	function (a, b, c) {
 		return {$: 'MySub', a: a, b: b, c: c};
@@ -11696,6 +11714,8 @@ var $elm$browser$Browser$Events$on = F3(
 		return $elm$browser$Browser$Events$subscription(
 			A3($elm$browser$Browser$Events$MySub, node, name, decoder));
 	});
+var $elm$browser$Browser$Events$onKeyPress = A2($elm$browser$Browser$Events$on, $elm$browser$Browser$Events$Document, 'keypress');
+var $elm$browser$Browser$Events$Window = {$: 'Window'};
 var $elm$browser$Browser$Events$onResize = function (func) {
 	return A3(
 		$elm$browser$Browser$Events$on,
@@ -11711,7 +11731,12 @@ var $elm$browser$Browser$Events$onResize = function (func) {
 				A2($elm$json$Json$Decode$field, 'innerHeight', $elm$json$Json$Decode$int))));
 };
 var $author$project$Main$subscriptions = function (model) {
-	return $elm$browser$Browser$Events$onResize($author$project$Main$WindowResized);
+	return $elm$core$Platform$Sub$batch(
+		_List_fromArray(
+			[
+				$elm$browser$Browser$Events$onResize($author$project$Main$WindowResized),
+				$elm$browser$Browser$Events$onKeyPress($author$project$Main$keyDecoder)
+			]));
 };
 var $author$project$Main$Failure = function (a) {
 	return {$: 'Failure', a: a};
@@ -11721,6 +11746,16 @@ var $author$project$Main$Result = function (a) {
 };
 var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
+var $author$project$Main$searchButtonPressed = function (model) {
+	var _v0 = model.searchBarContent;
+	if (_v0 === '') {
+		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+	} else {
+		return _Utils_Tuple2(
+			model,
+			A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/search?charname=' + model.searchBarContent));
+	}
+};
 var $elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
 		if (maybePort.$ === 'Nothing') {
@@ -11812,19 +11847,12 @@ var $author$project$Main$update = F2(
 						{searchBarContent: content}),
 					$elm$core$Platform$Cmd$none);
 			case 'SearchButtonPressed':
-				var _v2 = model.searchBarContent;
-				if (_v2 === '') {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				} else {
-					return _Utils_Tuple2(
-						model,
-						A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/search?charname=' + model.searchBarContent));
-				}
-			default:
+				return $author$project$Main$searchButtonPressed(model);
+			case 'GotSearchResult':
 				var responseTo = msg.a;
 				var result = msg.b;
-				var _v3 = _Utils_eq(responseTo, model.lastRequestSent);
-				if (!_v3) {
+				var _v2 = _Utils_eq(responseTo, model.lastRequestSent);
+				if (!_v2) {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				} else {
 					if (result.$ === 'Ok') {
@@ -11846,6 +11874,30 @@ var $author$project$Main$update = F2(
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
+				}
+			case 'SearchBarGetsFocus':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{searchBarFocused: true}),
+					$elm$core$Platform$Cmd$none);
+			case 'SearchBarLosesFocus':
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{searchBarFocused: false}),
+					$elm$core$Platform$Cmd$none);
+			default:
+				var key = msg.a;
+				if (key.$ === 'Enter') {
+					var _v5 = model.searchBarFocused;
+					if (!_v5) {
+						return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+					} else {
+						return $author$project$Main$searchButtonPressed(model);
+					}
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
 		}
 	});
@@ -17598,6 +17650,8 @@ var $author$project$Main$viewHeader = function (model) {
 var $author$project$Main$SearchBarChanged = function (a) {
 	return {$: 'SearchBarChanged', a: a};
 };
+var $author$project$Main$SearchBarGetsFocus = {$: 'SearchBarGetsFocus'};
+var $author$project$Main$SearchBarLosesFocus = {$: 'SearchBarLosesFocus'};
 var $mdgriffith$elm_ui$Element$Input$HiddenLabel = function (a) {
 	return {$: 'HiddenLabel', a: a};
 };
@@ -17785,6 +17839,20 @@ var $author$project$Main$noFocusShadow = $mdgriffith$elm_ui$Element$focused(
 				size: 0
 			})
 		]));
+var $elm$html$Html$Events$onFocus = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'focus',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $mdgriffith$elm_ui$Element$Events$onFocus = A2($elm$core$Basics$composeL, $mdgriffith$elm_ui$Internal$Model$Attr, $elm$html$Html$Events$onFocus);
+var $elm$html$Html$Events$onBlur = function (msg) {
+	return A2(
+		$elm$html$Html$Events$on,
+		'blur',
+		$elm$json$Json$Decode$succeed(msg));
+};
+var $mdgriffith$elm_ui$Element$Events$onLoseFocus = A2($elm$core$Basics$composeL, $mdgriffith$elm_ui$Internal$Model$Attr, $elm$html$Html$Events$onBlur);
 var $mdgriffith$elm_ui$Internal$Model$paddingName = F4(
 	function (top, right, bottom, left) {
 		return 'pad-' + ($elm$core$String$fromInt(top) + ('-' + ($elm$core$String$fromInt(right) + ('-' + ($elm$core$String$fromInt(bottom) + ('-' + $elm$core$String$fromInt(left)))))));
@@ -18756,7 +18824,9 @@ var $author$project$Main$viewSearchBar = function (model) {
 						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 						$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
 						$mdgriffith$elm_ui$Element$padding(((size.height - fontSize) / 2) | 0),
-						$mdgriffith$elm_ui$Element$Border$width(0)
+						$mdgriffith$elm_ui$Element$Border$width(0),
+						$mdgriffith$elm_ui$Element$Events$onFocus($author$project$Main$SearchBarGetsFocus),
+						$mdgriffith$elm_ui$Element$Events$onLoseFocus($author$project$Main$SearchBarLosesFocus)
 					]),
 				{
 					label: $mdgriffith$elm_ui$Element$Input$labelHidden('Search input'),
@@ -19023,14 +19093,7 @@ var $author$project$Main$viewTopBarButton = F2(
 	});
 var $author$project$Main$viewTopBarSearch = F2(
 	function (model, topBarHeight) {
-		var size = function () {
-			var _v0 = model.device._class;
-			if (_v0.$ === 'Phone') {
-				return {height: 0, width: 0};
-			} else {
-				return {height: topBarHeight - 15, width: 400};
-			}
-		}();
+		var size = {height: topBarHeight - 15, width: 350};
 		var fontSize = 20;
 		return A2(
 			$mdgriffith$elm_ui$Element$row,
@@ -19060,7 +19123,9 @@ var $author$project$Main$viewTopBarSearch = F2(
 							$mdgriffith$elm_ui$Element$Border$width(0),
 							$mdgriffith$elm_ui$Element$padding(((size.height - fontSize) / 2) | 0),
 							$mdgriffith$elm_ui$Element$Font$size(fontSize),
-							$mdgriffith$elm_ui$Element$Border$rounded(20)
+							$mdgriffith$elm_ui$Element$Border$rounded(20),
+							$mdgriffith$elm_ui$Element$Events$onFocus($author$project$Main$SearchBarGetsFocus),
+							$mdgriffith$elm_ui$Element$Events$onLoseFocus($author$project$Main$SearchBarLosesFocus)
 						]),
 					{
 						label: $mdgriffith$elm_ui$Element$Input$labelHidden('Search input'),
@@ -19100,7 +19165,12 @@ var $author$project$Main$viewTopBar = function (model) {
 		if (_v1.$ === 'SearchResultsPage') {
 			var _v2 = model.device._class;
 			if (_v2.$ === 'Phone') {
-				return false;
+				var _v3 = model.device.orientation;
+				if (_v3.$ === 'Portrait') {
+					return false;
+				} else {
+					return true;
+				}
 			} else {
 				return true;
 			}
@@ -19144,11 +19214,7 @@ var $author$project$Main$view = function (model) {
 			[
 				A2(
 				$mdgriffith$elm_ui$Element$layout,
-				_List_fromArray(
-					[
-						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-						$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill)
-					]),
+				_List_Nil,
 				A2(
 					$mdgriffith$elm_ui$Element$column,
 					_List_fromArray(
@@ -19182,4 +19248,4 @@ var $author$project$Main$view = function (model) {
 };
 var $author$project$Main$main = $elm$browser$Browser$application(
 	{init: $author$project$Main$init, onUrlChange: $author$project$Main$UrlChange, onUrlRequest: $author$project$Main$UrlRequest, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
-_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.Character":{"args":[],"type":"{ id : Basics.Int, name : String.String, status : Main.Status, species : String.String, subType : String.String, gender : String.String, origin : Main.CharacterOriginLocation, location : Main.CharacterOriginLocation, image : String.String, episode : List.List String.String, url : String.String }"},"Main.CharacterOriginLocation":{"args":[],"type":"{ name : String.String, url : String.String }"},"Main.CharacterRequest":{"args":[],"type":"{ info : Main.RequestInfo, results : List.List Main.Character }"},"Main.RequestInfo":{"args":[],"type":"{ count : Basics.Int, pages : Basics.Int, next : Maybe.Maybe String.String, prev : Maybe.Maybe String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"WindowResized":["Basics.Int","Basics.Int"],"SearchBarChanged":["String.String"],"SearchButtonPressed":[],"GotSearchResult":["String.String","Result.Result Http.Error Main.CharacterRequest"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Main.Status":{"args":[],"tags":{"Alive":[],"Dead":[],"Unknown":[],"InvalidStatus":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}}}}})}});}(this));
+_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.Character":{"args":[],"type":"{ id : Basics.Int, name : String.String, status : Main.Status, species : String.String, subType : String.String, gender : String.String, origin : Main.CharacterOriginLocation, location : Main.CharacterOriginLocation, image : String.String, episode : List.List String.String, url : String.String }"},"Main.CharacterOriginLocation":{"args":[],"type":"{ name : String.String, url : String.String }"},"Main.CharacterRequest":{"args":[],"type":"{ info : Main.RequestInfo, results : List.List Main.Character }"},"Main.RequestInfo":{"args":[],"type":"{ count : Basics.Int, pages : Basics.Int, next : Maybe.Maybe String.String, prev : Maybe.Maybe String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"WindowResized":["Basics.Int","Basics.Int"],"SearchBarChanged":["String.String"],"SearchButtonPressed":[],"GotSearchResult":["String.String","Result.Result Http.Error Main.CharacterRequest"],"SearchBarGetsFocus":[],"SearchBarLosesFocus":[],"KeyPress":["Main.Key"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Main.Key":{"args":[],"tags":{"Enter":[],"NonEnter":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Main.Status":{"args":[],"tags":{"Alive":[],"Dead":[],"Unknown":[],"InvalidStatus":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}}}}})}});}(this));
