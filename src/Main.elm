@@ -5,9 +5,11 @@ import Browser.Events
 import Browser.Navigation as Nav
 import Http
 import Url
-import Url.Parser as UP
+import Url.Parser as UP exposing ((<?>))
+import Url.Parser.Query as Query
 import Json.Decode as D
 import Json.Encode as E
+import Json.Decode.Pipeline as DP exposing (required, optional)
 import Html exposing (Html)
 import Element exposing (..)
 import Element.Background as Background
@@ -42,7 +44,15 @@ type alias Model =
 type alias Character =
     { id : Int
     , name : String
-    --, status : Status
+    , status : Status
+    , species : String
+    , subType : String
+    , gender : String
+    , origin : CharacterOriginLocation
+    , location : CharacterOriginLocation
+    , image : String
+    , episode : List String
+    , url : String
     }
 
 
@@ -50,17 +60,21 @@ type Status =
       Alive
     | Dead
     | Unknown
+    | InvalidStatus
 
 type Route =
       Home
     | About
     | NotFound
+    | SearchResultsPage (Maybe String)
+      
 
 routeParser : UP.Parser (Route -> a) a
 routeParser =
     UP.oneOf
         [ UP.map Home UP.top
         , UP.map About <| UP.s "About"
+        , UP.map SearchResultsPage <| UP.s "search" <?> Query.string "charname"
         ]
 
 toRoute : Url.Url -> Route
@@ -123,12 +137,12 @@ type Msg =
     | WindowResized Int Int
     | SearchBarChanged String
     | InitiateSearch
-    | GotSearchResult String (Result Http.Error Character)
+    | GotSearchResult String (Result Http.Error CharacterRequest)
       
 type SearchResult =
       Failure Http.Error
     | Loading
-    | Result Character
+    | Result CharacterRequest
     | NoSearchInitiated
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -161,17 +175,18 @@ update msg model =
             )
 
         InitiateSearch ->
-            getStuff { model | searchResult = Loading }
-                
+          getStuff { model | searchResult = Loading }
+            
         GotSearchResult responseTo result ->
             case responseTo == model.lastRequestSent of
                 False ->
                     ( model, Cmd.none )
                 True ->
                     case result of
-                        Ok character ->
-                            ( { model | searchResult = Result character  }
-                            , Cmd.none
+                        Ok characterList ->
+                            ( { model | searchResult = Result characterList }
+                              , Nav.pushUrl model.key
+                                  ( "/search?charname=" ++ responseTo )
                             )
                         Err err ->
                             ( { model | searchResult = Failure err }
@@ -179,24 +194,6 @@ update msg model =
                             )
 
             
-getStuff : Model -> ( Model, Cmd Msg )
-getStuff model =
-    let sbr = model.searchBarContent
-        newModel = { model | lastRequestSent = sbr }
-    in ( newModel
-       , Http.get
-           { url = "https://rickandmortyapi.com/api/character/2"
-           , expect = Http.expectJson
-                          (GotSearchResult model.searchBarContent) decodeCharacter
-           }
-       )
-
-decodeCharacter : D.Decoder Character
-decodeCharacter =
-    D.map2 Character
-        ( D.field "id" D.int )
-        ( D.field "name" D.string )
-
 
 --SUBSCRIPTIONS
 
@@ -226,12 +223,19 @@ view model =
                             viewHomePage model
                         About ->
                             viewAboutPage model
+                        SearchResultsPage resultTo ->
+                            viewResultsPage model
                         NotFound ->
                             text "page not found"
                   ]
         ]
     }
 
+viewResultsPage : Model -> Element Msg
+viewResultsPage model =
+    column
+        []
+        <| [ text "results page" ]
 
 viewHomePage : Model -> Element Msg
 viewHomePage model =
@@ -396,3 +400,81 @@ viewTopBarButton url label =
            , label = text label
            }
     
+--HTTP
+
+getStuff : Model -> ( Model, Cmd Msg )
+getStuff model =
+    let sbr = model.searchBarContent
+        newModel = { model | lastRequestSent = sbr }
+    in ( newModel
+       , Http.get
+           { url = "https://rickandmortyapi.com/api/character/?name="
+                 ++ model.searchBarContent
+           , expect = Http.expectJson
+                          (GotSearchResult model.searchBarContent)
+                              decodeCharacterRequest
+           }
+       )
+
+decodeCharacter : D.Decoder Character
+decodeCharacter =
+    D.succeed Character
+        |> DP.required "id" D.int 
+        |> DP.required "name" D.string
+        |> DP.required "status" decodeStatus
+        |> DP.required "species" D.string
+        |> DP.required "type" D.string
+        |> DP.required "gender" D.string
+        |> DP.required "origin" decodeCharacterOriginLocation
+        |> DP.required "location" decodeCharacterOriginLocation
+        |> DP.required "image" D.string
+        |> DP.required "episode" ( D.list D.string )
+        |> DP.required "url" D.string
+        
+decodeStatus : D.Decoder Status
+decodeStatus =
+    let stringToStatus string =
+            case string of
+                "Alive" -> Alive
+                "Dead" -> Dead
+                "unknown" -> Unknown
+                _ -> InvalidStatus
+    in D.map stringToStatus D.string
+
+decodeCharacterOriginLocation : D.Decoder CharacterOriginLocation
+decodeCharacterOriginLocation =
+    D.map2 CharacterOriginLocation
+        ( D.field "name" D.string )
+        ( D.field "url" D.string )
+              
+
+type alias CharacterOriginLocation =
+    { name : String
+    , url : String
+    }
+
+type alias CharacterRequest =
+    { info : RequestInfo
+    , results : List Character
+    }
+
+type alias RequestInfo =
+    { count : Int
+    , pages : Int
+    , next : Maybe String
+    , prev : Maybe String
+    }
+
+decodeRequestInfo : D.Decoder RequestInfo
+decodeRequestInfo =
+    D.succeed RequestInfo
+        |> DP.required "count" D.int
+        |> DP.required "pages" D.int
+        |> DP.required "next" ( D.nullable D.string )
+        |> DP.required "prev" ( D.nullable D.string )
+
+decodeCharacterRequest : D.Decoder CharacterRequest
+decodeCharacterRequest =
+    D.map2 CharacterRequest
+        ( D.field "info" decodeRequestInfo )
+        ( D.field "results" ( D.list decodeCharacter ) )
