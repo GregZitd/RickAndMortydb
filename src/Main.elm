@@ -99,14 +99,13 @@ init flags url key =
 
     in case D.decodeValue decodeFlags flags of
            Ok flagsDecoded ->
-               ( { model | device = windowToDevice
-                                       flagsDecoded.width
-                                       flagsDecoded.height
-                 , windowSize = Flags flagsDecoded.width flagsDecoded.height
-                 }
-               , Cmd.none
-               )
-
+               initiateSearchFromUrl
+                    { model | device = windowToDevice
+                                           flagsDecoded.width
+                                           flagsDecoded.height
+                            , windowSize = Flags flagsDecoded.width flagsDecoded.height
+                    }
+               
            Err _ ->
                ( model, Cmd.none )
 
@@ -136,7 +135,7 @@ type Msg =
     | UrlRequest Browser.UrlRequest
     | WindowResized Int Int
     | SearchBarChanged String
-    | InitiateSearch
+    | SearchButtonPressed
     | GotSearchResult String (Result Http.Error CharacterRequest)
       
 type SearchResult =
@@ -149,11 +148,12 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         UrlChange url ->
-            ( { model | url = url
-                      , route = toRoute url}
-            , Cmd.none
-            )
-
+            let newModel =
+                    { model | url = url
+                    , route = toRoute url
+                    }
+            in initiateSearchFromUrl newModel
+                                               
         UrlRequest urlRequest ->
             case urlRequest of
                 Browser.Internal url ->
@@ -174,9 +174,13 @@ update msg model =
             , Cmd.none
             )
 
-        InitiateSearch ->
-          getStuff { model | searchResult = Loading }
-            
+        SearchButtonPressed ->
+            case model.searchBarContent of
+                "" -> ( model, Cmd.none )
+                _ -> ( model, Nav.pushUrl
+                                   model.key
+                                   ( "/search?charname=" ++ model.searchBarContent ) )
+    
         GotSearchResult responseTo result ->
             case responseTo == model.lastRequestSent of
                 False ->
@@ -185,8 +189,7 @@ update msg model =
                     case result of
                         Ok characterList ->
                             ( { model | searchResult = Result characterList }
-                              , Nav.pushUrl model.key
-                                  ( "/search?charname=" ++ responseTo )
+                              ,Cmd.none
                             )
                         Err err ->
                             ( { model | searchResult = Failure err }
@@ -194,7 +197,22 @@ update msg model =
                             )
 
             
+initiateSearchFromUrl : Model -> (Model,Cmd Msg)
+initiateSearchFromUrl model  =
+     case model.route of
+                   SearchResultsPage searchUrl ->
+                       case searchUrl of
 
+                           Just searchTerm ->
+                               getStuff searchTerm model
+
+                           Nothing ->
+                               ( { model | route = NotFound }
+                               , Cmd.none
+                               )
+
+                   _ ->
+                       ( model, Cmd.none )
 --SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
@@ -217,7 +235,7 @@ view model =
                   , height fill
                   , Font.color white
                   ]
-                  [ viewTopBar
+                  [ viewTopBar model
                   , case model.route of
                         Home ->
                             viewHomePage model
@@ -281,7 +299,7 @@ viewSearchBar model =
              Phone -> { width = 400, height = 40 }
              Tablet -> { width = 500, height = 50 }
              _ -> { width = 600, height = 50 }
-        yPad = 5
+        yPad = 0
         spacingVal = 15
         fontSize = 25
     in row
@@ -307,8 +325,8 @@ viewSearchBar model =
             , Font.size fontSize
             , noFocusShadow
             , width fill
-            , height <| px fontSize
-            , padding 0
+            , height fill
+            , padding <| (size.height - fontSize) // 2
             , Border.width 0
             ]
             { onChange = SearchBarChanged
@@ -348,7 +366,7 @@ viewSearchButton =
                   }
               ]
         ]
-        { onPress = Just InitiateSearch
+        { onPress = Just SearchButtonPressed
         , label = text "Search"
         }
 
@@ -375,24 +393,94 @@ orange = rgb255 255 140 0
 green : Color
 green = rgb255 0 204 204
 
-viewTopBar : Element Msg
-viewTopBar =
-    row [ Background.color white
-        , width fill
-        , height <| px 60
-        , paddingXY 30 0
-        , Font.bold
-        , Font.color black
-        , spacing 20
+viewTopBar : Model -> Element Msg
+viewTopBar model =
+    let shouldSearchBarShow =
+            case model.route of
+                SearchResultsPage _ ->
+                    case model.device.class of
+                        Phone -> False
+                        _ -> True
+                _ -> False
+        searchBar : Bool -> Element Msg
+        searchBar bool =
+            case bool of
+                False -> none
+                True ->
+                    el
+                      [ alignLeft
+                      ] <|
+                      viewTopBarSearch model topBarHeight
+        topBarHeight = 60
+    in row [ Background.color white
+           , width fill
+           , height <| px topBarHeight
+           , paddingXY 30 0
+           , Font.color black
+           , spacing 20
+           ]
+           [ searchBar shouldSearchBarShow
+           , viewTopBarButton "/" "Home"
+           , viewTopBarButton "/About" "About"
+           ]
+
+viewTopBarSearch : Model -> Int -> Element Msg
+viewTopBarSearch model topBarHeight =
+    let size =
+            case model.device.class of
+                Phone -> { width = 0, height = 0 }
+                _ -> { width = 400
+                     , height = topBarHeight - 15
+                     }
+        fontSize = 20
+    in row
+        [ Background.color black
+        , width <| px size.width
+        , height <| px size.height
+        , Border.rounded 30
+        , paddingEach
+            { top = 0, right = 15, bottom = 0, left = 5 }
+        , spacing 30
         ]
-        [ viewTopBarButton "/" "Home"
-        , viewTopBarButton "/About" "About"
+        [ Input.search
+              [ Background.color black
+              , height fill
+              , width fill
+              , Font.color white
+              , noFocusShadow
+              , Border.width 0
+              --, explain Debug.todo
+              , padding <| ( size.height - fontSize ) // 2
+              , Font.size fontSize
+              , Border.rounded 20
+              ]
+              { onChange = SearchBarChanged
+              , text = model.searchBarContent
+              , placeholder = Nothing
+              , label = Input.labelHidden "Search input"
+              }
+        , el
+            [ Background.uncropped "Images/blue_search_icon.png"
+            , height <| px (size.height - 15 )
+            , width <| px ( size.height - 15 )
+            , alignRight
+            ] <|
+            Input.button
+                [ width fill
+                , height fill
+                , noFocusShadow
+                ]
+                { onPress = Just SearchButtonPressed
+                , label = none
+                }
         ]
+
 
 viewTopBarButton : String -> String -> Element Msg
 viewTopBarButton url label =
     link
       [ alignRight
+      , Font.bold
       , mouseOver
             [ Font.color green
             ]
@@ -402,16 +490,16 @@ viewTopBarButton url label =
     
 --HTTP
 
-getStuff : Model -> ( Model, Cmd Msg )
-getStuff model =
-    let sbr = model.searchBarContent
-        newModel = { model | lastRequestSent = sbr }
+--initiates search and sets lastRequest to the search term to avoid http race conditions
+getStuff : String -> Model -> ( Model, Cmd Msg )
+getStuff searchTerm model =
+    let newModel = { model | lastRequestSent = searchTerm }
     in ( newModel
        , Http.get
            { url = "https://rickandmortyapi.com/api/character/?name="
-                 ++ model.searchBarContent
+                 ++ searchTerm
            , expect = Http.expectJson
-                          (GotSearchResult model.searchBarContent)
+                          (GotSearchResult searchTerm)
                               decodeCharacterRequest
            }
        )
