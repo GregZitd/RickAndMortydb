@@ -293,9 +293,16 @@ view model =
 
 viewResultsPage : Model -> Element Msg
 viewResultsPage model =
-    column
-        []
-        <| [ text "results page" ]
+    case model.searchResult of
+        Result charRequest ->
+            column
+                [ centerX
+                , padding 10
+                , spacing 5
+                ] <|
+                List.map ( viewCharacterResult model.device ) charRequest.results
+        _ -> text "Something went wrong tetya"
+        
 
 viewHomePage : Model -> Element Msg
 viewHomePage model =
@@ -534,7 +541,184 @@ viewTopBarButton url label =
       ] <| { url = url
            , label = text label
            }
-    
+grey : Color
+grey = rgb255 105 105 105
+
+viewCharacterResultPC : Character -> Element Msg
+viewCharacterResultPC character =
+    let viewSpecies species subType =
+            case subType of
+                "" -> species
+                _ -> species ++ " - " ++ subType
+    in row
+          [ Background.color grey
+          , height <| px 150
+          , width <| px 450
+          , Border.rounded 20
+          ]
+          [ el
+              [ height <| px 150
+              , width <| px 150
+              , Border.roundEach
+                  { topLeft = 20
+                  , topRight = 0
+                  , bottomLeft = 20
+                  , bottomRight = 0
+                  }
+              , Background.uncropped character.image
+              ]
+              none
+          ,column
+              [ padding 10
+              , spacing 15
+              , alignTop
+              ]
+              [ link
+                   [ Font.bold
+                   , mouseOver [ Font.color green ]
+                   ]
+                   { url = character.url
+                   , label = text character.name
+                   }
+              , column
+                  [ spacing 5]
+                  [ el
+                      [ Font.size 15
+                      , Font.color <| rgb255 211 211 211
+                      ] <|
+                      text "Status:"
+                  , el
+                      [
+                      ] <|
+                      text ( statusToString character.status )
+                  ]
+              , column
+                  [ spacing 5]
+                  [ el
+                      [ Font.size 15
+                      , Font.color <| rgb255 211 211 211
+                      ] <|
+                      text "Species:"
+                  , el
+                      [
+                      ] <|
+                      text <| viewSpecies character.species character.subType
+                  ]
+              ]
+          ]
+
+viewCharacterResult : Device -> Character -> Element Msg
+viewCharacterResult device character =
+    let viewSpecies species subType =
+            case subType of
+                "" -> species
+                _ -> species ++ " - " ++ subType
+
+        textInfoPart =
+            [ column
+                  [ padding 10
+                  , spacing 15
+                  , alignTop
+                  ]
+                  [ paragraph []
+                        [ link
+                            [ Font.bold
+                            , mouseOver [ Font.color green ]
+                            ]
+                            { url = character.url
+                            , label = text character.name
+                            }
+                        ]
+                  , column
+                      [ spacing 5]
+                      [ paragraph
+                          [ Font.size 15
+                          , Font.color <| rgb255 211 211 211
+                          ] <|
+                          [ text "Status:" ]
+                      , paragraph
+                          [] <|
+                          [ text ( statusToString character.status ) ]
+                      ]
+                  , column
+                      [ spacing 5]
+                      [ paragraph
+                          [ Font.size 15
+                          , Font.color <| rgb255 211 211 211
+                          , width <| px 200
+                          ]
+                          [ text "Species:" ]
+                      , paragraph
+                          [
+                          ] <|
+                          [ text <| viewSpecies character.species character.subType ]
+                      ]
+                  ]
+            ]
+
+        horizontalLook textInfo =
+            row
+                   [ Background.color grey
+                   , height <| px 180
+                   , width <| px 500
+                   , Border.rounded 20
+                   ] <| 
+                   [ el
+                       [ height <| px 180
+                       , width <| px 180
+                       , Border.roundEach
+                           { topLeft = 20
+                           , topRight = 0
+                           , bottomLeft = 20
+                           , bottomRight = 0
+                           }
+                       , Background.uncropped character.image
+                       ]
+                       none
+                   ]
+                   ++ textInfo
+
+        verticalLook textInfo =
+            column
+                  [ Background.color grey
+                  , width <| px 200
+                  , Border.rounded 20
+                  ] <|
+                  [ el
+                      [ height <| px 200
+                      , width <| px 200
+                      , Border.roundEach
+                          { topLeft = 20
+                          , topRight = 20
+                          , bottomLeft = 0
+                          , bottomRight = 0
+                          }
+                      , Background.uncropped character.image
+                      ]
+                      none
+                  ]
+                  ++ textInfo
+                      
+    in case device.class of
+           Phone ->
+               case device.orientation of
+                   Portrait ->
+                       verticalLook textInfoPart
+                   Landscape ->
+                       horizontalLook textInfoPart
+                           
+           _ ->
+                horizontalLook textInfoPart
+          
+   
+statusToString : Status -> String
+statusToString status =
+    case status of
+        Alive -> "Alive"
+        Dead -> "Dead"
+        Unknown -> "unknown"
+        InvalidStatus -> "Invalid status"
+
 --HTTP
 
 --initiates search and sets lastRequest to the search term to avoid http race conditions
