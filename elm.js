@@ -10746,6 +10746,33 @@ var $author$project$Main$decodeFlags = A3(
 	$author$project$Main$Flags,
 	A2($elm$json$Json$Decode$field, 'width', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'height', $elm$json$Json$Decode$int));
+var $author$project$Main$NoOp = {$: 'NoOp'};
+var $elm$core$Task$onError = _Scheduler_onError;
+var $elm$core$Task$attempt = F2(
+	function (resultToMessage, task) {
+		return $elm$core$Task$command(
+			$elm$core$Task$Perform(
+				A2(
+					$elm$core$Task$onError,
+					A2(
+						$elm$core$Basics$composeL,
+						A2($elm$core$Basics$composeL, $elm$core$Task$succeed, resultToMessage),
+						$elm$core$Result$Err),
+					A2(
+						$elm$core$Task$andThen,
+						A2(
+							$elm$core$Basics$composeL,
+							A2($elm$core$Basics$composeL, $elm$core$Task$succeed, resultToMessage),
+							$elm$core$Result$Ok),
+						task))));
+	});
+var $elm$browser$Browser$Dom$focus = _Browser_call('focus');
+var $author$project$Main$focusSearchBox = A2(
+	$elm$core$Task$attempt,
+	function (_v0) {
+		return $author$project$Main$NoOp;
+	},
+	$elm$browser$Browser$Dom$focus('home-page-searchbar'));
 var $author$project$Main$NotFound = {$: 'NotFound'};
 var $author$project$Main$GotSearchResult = F2(
 	function (a, b) {
@@ -11146,8 +11173,8 @@ var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
 		{body: $elm$http$Http$emptyBody, expect: r.expect, headers: _List_Nil, method: 'GET', timeout: $elm$core$Maybe$Nothing, tracker: $elm$core$Maybe$Nothing, url: r.url});
 };
-var $author$project$Main$getStuff = F2(
-	function (searchTerm, model) {
+var $author$project$Main$getStuff = F3(
+	function (searchTerm, page, model) {
 		var newModel = _Utils_update(
 			model,
 			{lastRequestSent: searchTerm});
@@ -11159,25 +11186,39 @@ var $author$project$Main$getStuff = F2(
 						$elm$http$Http$expectJson,
 						$author$project$Main$GotSearchResult(searchTerm),
 						$author$project$Main$decodeCharacterRequest),
-					url: 'https://rickandmortyapi.com/api/character/?name=' + searchTerm
+					url: 'https://rickandmortyapi.com/api/character/?name=' + (searchTerm + ('&page=' + $elm$core$String$fromInt(page)))
 				}));
 	});
 var $author$project$Main$initiateSearchFromUrl = function (model) {
 	var _v0 = model.route;
-	if (_v0.$ === 'SearchResultsPage') {
-		var searchUrl = _v0.a;
-		if (searchUrl.$ === 'Just') {
-			var searchTerm = searchUrl.a;
-			return A2($author$project$Main$getStuff, searchTerm, model);
-		} else {
-			return _Utils_Tuple2(
-				_Utils_update(
-					model,
-					{route: $author$project$Main$NotFound}),
-				$elm$core$Platform$Cmd$none);
-		}
-	} else {
-		return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+	switch (_v0.$) {
+		case 'SearchResultsPage':
+			var parameters = _v0.a;
+			var _v1 = parameters.charname;
+			if (_v1.$ === 'Just') {
+				var searchTerm = _v1.a;
+				var _v2 = parameters.page;
+				if (_v2.$ === 'Just') {
+					var page = _v2.a;
+					return A3($author$project$Main$getStuff, searchTerm, page, model);
+				} else {
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{route: $author$project$Main$NotFound}),
+						$elm$core$Platform$Cmd$none);
+				}
+			} else {
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{route: $author$project$Main$NotFound}),
+					$elm$core$Platform$Cmd$none);
+			}
+		case 'Home':
+			return _Utils_Tuple2(model, $author$project$Main$focusSearchBox);
+		default:
+			return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 	}
 };
 var $elm$url$Url$Parser$State = F5(
@@ -11304,6 +11345,37 @@ var $author$project$Main$Home = {$: 'Home'};
 var $author$project$Main$SearchResultsPage = function (a) {
 	return {$: 'SearchResultsPage', a: a};
 };
+var $author$project$Main$SearchResultsPageParameters = F2(
+	function (charname, page) {
+		return {charname: charname, page: page};
+	});
+var $elm$url$Url$Parser$Internal$Parser = function (a) {
+	return {$: 'Parser', a: a};
+};
+var $elm$url$Url$Parser$Query$custom = F2(
+	function (key, func) {
+		return $elm$url$Url$Parser$Internal$Parser(
+			function (dict) {
+				return func(
+					A2(
+						$elm$core$Maybe$withDefault,
+						_List_Nil,
+						A2($elm$core$Dict$get, key, dict)));
+			});
+	});
+var $elm$url$Url$Parser$Query$int = function (key) {
+	return A2(
+		$elm$url$Url$Parser$Query$custom,
+		key,
+		function (stringList) {
+			if (stringList.b && (!stringList.b.b)) {
+				var str = stringList.a;
+				return $elm$core$String$toInt(str);
+			} else {
+				return $elm$core$Maybe$Nothing;
+			}
+		});
+};
 var $elm$url$Url$Parser$Parser = function (a) {
 	return {$: 'Parser', a: a};
 };
@@ -11337,6 +11409,18 @@ var $elm$url$Url$Parser$map = F2(
 					$elm$url$Url$Parser$mapState(value),
 					parseArg(
 						A5($elm$url$Url$Parser$State, visited, unvisited, params, frag, subValue)));
+			});
+	});
+var $elm$url$Url$Parser$Query$map2 = F3(
+	function (func, _v0, _v1) {
+		var a = _v0.a;
+		var b = _v1.a;
+		return $elm$url$Url$Parser$Internal$Parser(
+			function (dict) {
+				return A2(
+					func,
+					a(dict),
+					b(dict));
 			});
 	});
 var $elm$url$Url$Parser$oneOf = function (parsers) {
@@ -11418,20 +11502,6 @@ var $elm$url$Url$Parser$s = function (str) {
 			}
 		});
 };
-var $elm$url$Url$Parser$Internal$Parser = function (a) {
-	return {$: 'Parser', a: a};
-};
-var $elm$url$Url$Parser$Query$custom = F2(
-	function (key, func) {
-		return $elm$url$Url$Parser$Internal$Parser(
-			function (dict) {
-				return func(
-					A2(
-						$elm$core$Maybe$withDefault,
-						_List_Nil,
-						A2($elm$core$Dict$get, key, dict)));
-			});
-	});
 var $elm$url$Url$Parser$Query$string = function (key) {
 	return A2(
 		$elm$url$Url$Parser$Query$custom,
@@ -11464,7 +11534,11 @@ var $author$project$Main$routeParser = $elm$url$Url$Parser$oneOf(
 			A2(
 				$elm$url$Url$Parser$questionMark,
 				$elm$url$Url$Parser$s('search'),
-				$elm$url$Url$Parser$Query$string('charname')))
+				A3(
+					$elm$url$Url$Parser$Query$map2,
+					$author$project$Main$SearchResultsPageParameters,
+					$elm$url$Url$Parser$Query$string('charname'),
+					$elm$url$Url$Parser$Query$int('page'))))
 		]));
 var $author$project$Main$toRoute = function (url) {
 	return A2(
@@ -11511,13 +11585,20 @@ var $author$project$Main$init = F3(
 		var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$decodeFlags, flags);
 		if (_v0.$ === 'Ok') {
 			var flagsDecoded = _v0.a;
-			return $author$project$Main$initiateSearchFromUrl(
+			var _v1 = $author$project$Main$initiateSearchFromUrl(
 				_Utils_update(
 					model,
 					{
 						device: A2($author$project$Main$windowToDevice, flagsDecoded.width, flagsDecoded.height),
 						windowSize: A2($author$project$Main$Flags, flagsDecoded.width, flagsDecoded.height)
 					}));
+			var initModel = _v1.a;
+			var initCmdMsg = _v1.b;
+			return _Utils_Tuple2(
+				initModel,
+				$elm$core$Platform$Cmd$batch(
+					_List_fromArray(
+						[initCmdMsg, $author$project$Main$focusSearchBox])));
 		} else {
 			return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
@@ -11746,6 +11827,13 @@ var $author$project$Main$Result = function (a) {
 };
 var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
+var $elm$browser$Browser$Dom$setViewport = _Browser_setViewport;
+var $author$project$Main$resetViewport = A2(
+	$elm$core$Task$perform,
+	function (_v0) {
+		return $author$project$Main$NoOp;
+	},
+	A2($elm$browser$Browser$Dom$setViewport, 0, 0));
 var $author$project$Main$searchButtonPressed = function (model) {
 	var _v0 = model.searchBarContent;
 	if (_v0 === '') {
@@ -11753,8 +11841,13 @@ var $author$project$Main$searchButtonPressed = function (model) {
 	} else {
 		return _Utils_Tuple2(
 			model,
-			A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/search?charname=' + model.searchBarContent));
+			A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/search?charname=' + (model.searchBarContent + '&page=1')));
 	}
+};
+var $author$project$Main$searchParametersToString = function (parameters) {
+	var page = A2($elm$core$Maybe$withDefault, 0, parameters.page);
+	var charname = A2($elm$core$Maybe$withDefault, '', parameters.charname);
+	return '/search?charname=' + (charname + ('&page=' + $elm$core$String$fromInt(page)));
 };
 var $elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
@@ -11887,7 +11980,7 @@ var $author$project$Main$update = F2(
 						model,
 						{searchBarFocused: false}),
 					$elm$core$Platform$Cmd$none);
-			default:
+			case 'KeyPress':
 				var key = msg.a;
 				if (key.$ === 'Enter') {
 					var _v5 = model.searchBarFocused;
@@ -11899,6 +11992,49 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
+			case 'GoToPage':
+				var navigate = msg.a;
+				var newPageNum = function () {
+					var _v7 = model.route;
+					if (_v7.$ === 'SearchResultsPage') {
+						var parameters = _v7.a;
+						switch (navigate.$) {
+							case 'Next':
+								return A2($elm$core$Maybe$withDefault, 0, parameters.page) + 1;
+							case 'Prev':
+								return A2($elm$core$Maybe$withDefault, 0, parameters.page) - 1;
+							default:
+								var num = navigate.a;
+								return num;
+						}
+					} else {
+						return 1;
+					}
+				}();
+				var _v6 = model.route;
+				if (_v6.$ === 'SearchResultsPage') {
+					var parameters = _v6.a;
+					return _Utils_Tuple2(
+						model,
+						$elm$core$Platform$Cmd$batch(
+							_List_fromArray(
+								[
+									A2(
+									$elm$browser$Browser$Navigation$pushUrl,
+									model.key,
+									$author$project$Main$searchParametersToString(
+										_Utils_update(
+											parameters,
+											{
+												page: $elm$core$Maybe$Just(newPageNum)
+											}))),
+									$author$project$Main$resetViewport
+								])));
+				} else {
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				}
+			default:
+				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
 	});
 var $mdgriffith$elm_ui$Internal$Model$Rgba = F4(
@@ -17541,23 +17677,48 @@ var $author$project$Main$viewAboutPage = function (model) {
 				$mdgriffith$elm_ui$Element$text('About page')
 			]));
 };
+var $mdgriffith$elm_ui$Internal$Model$AlignY = function (a) {
+	return {$: 'AlignY', a: a};
+};
+var $mdgriffith$elm_ui$Internal$Model$Bottom = {$: 'Bottom'};
+var $mdgriffith$elm_ui$Element$alignBottom = $mdgriffith$elm_ui$Internal$Model$AlignY($mdgriffith$elm_ui$Internal$Model$Bottom);
+var $mdgriffith$elm_ui$Internal$Model$Class = F2(
+	function (a, b) {
+		return {$: 'Class', a: a, b: b};
+	});
+var $mdgriffith$elm_ui$Internal$Flag$fontAlignment = $mdgriffith$elm_ui$Internal$Flag$flag(12);
+var $mdgriffith$elm_ui$Element$Font$center = A2($mdgriffith$elm_ui$Internal$Model$Class, $mdgriffith$elm_ui$Internal$Flag$fontAlignment, $mdgriffith$elm_ui$Internal$Style$classes.textCenter);
 var $mdgriffith$elm_ui$Internal$Model$PaddingStyle = F5(
 	function (a, b, c, d, e) {
 		return {$: 'PaddingStyle', a: a, b: b, c: c, d: d, e: e};
 	});
 var $mdgriffith$elm_ui$Internal$Flag$padding = $mdgriffith$elm_ui$Internal$Flag$flag(2);
-var $mdgriffith$elm_ui$Element$padding = function (x) {
-	return A2(
-		$mdgriffith$elm_ui$Internal$Model$StyleClass,
-		$mdgriffith$elm_ui$Internal$Flag$padding,
-		A5(
-			$mdgriffith$elm_ui$Internal$Model$PaddingStyle,
-			'p-' + $elm$core$String$fromInt(x),
-			x,
-			x,
-			x,
-			x));
+var $mdgriffith$elm_ui$Element$paddingXY = F2(
+	function (x, y) {
+		return _Utils_eq(x, y) ? A2(
+			$mdgriffith$elm_ui$Internal$Model$StyleClass,
+			$mdgriffith$elm_ui$Internal$Flag$padding,
+			A5(
+				$mdgriffith$elm_ui$Internal$Model$PaddingStyle,
+				'p-' + $elm$core$String$fromInt(x),
+				x,
+				x,
+				x,
+				x)) : A2(
+			$mdgriffith$elm_ui$Internal$Model$StyleClass,
+			$mdgriffith$elm_ui$Internal$Flag$padding,
+			A5(
+				$mdgriffith$elm_ui$Internal$Model$PaddingStyle,
+				'p-' + ($elm$core$String$fromInt(x) + ('-' + $elm$core$String$fromInt(y))),
+				y,
+				x,
+				y,
+				x));
+	});
+var $mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
+	return {$: 'Describe', a: a};
 };
+var $mdgriffith$elm_ui$Internal$Model$Paragraph = {$: 'Paragraph'};
 var $mdgriffith$elm_ui$Internal$Model$SpacingStyle = F3(
 	function (a, b, c) {
 		return {$: 'SpacingStyle', a: a, b: b, c: c};
@@ -17574,6 +17735,57 @@ var $mdgriffith$elm_ui$Element$spacing = function (x) {
 		A3(
 			$mdgriffith$elm_ui$Internal$Model$SpacingStyle,
 			A2($mdgriffith$elm_ui$Internal$Model$spacingName, x, x),
+			x,
+			x));
+};
+var $mdgriffith$elm_ui$Element$paragraph = F2(
+	function (attrs, children) {
+		return A4(
+			$mdgriffith$elm_ui$Internal$Model$element,
+			$mdgriffith$elm_ui$Internal$Model$asParagraph,
+			$mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				$elm$core$List$cons,
+				$mdgriffith$elm_ui$Internal$Model$Describe($mdgriffith$elm_ui$Internal$Model$Paragraph),
+				A2(
+					$elm$core$List$cons,
+					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+					A2(
+						$elm$core$List$cons,
+						$mdgriffith$elm_ui$Element$spacing(5),
+						attrs))),
+			$mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
+	});
+var $mdgriffith$elm_ui$Element$Font$size = function (i) {
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$fontSize,
+		$mdgriffith$elm_ui$Internal$Model$FontSize(i));
+};
+var $author$project$Main$white = A3($mdgriffith$elm_ui$Element$rgb255, 255, 255, 255);
+var $author$project$Main$viewFooter = A2(
+	$mdgriffith$elm_ui$Element$paragraph,
+	_List_fromArray(
+		[
+			$mdgriffith$elm_ui$Element$Font$center,
+			$mdgriffith$elm_ui$Element$Font$color($author$project$Main$white),
+			$mdgriffith$elm_ui$Element$Font$size(12),
+			A2($mdgriffith$elm_ui$Element$paddingXY, 0, 30),
+			$mdgriffith$elm_ui$Element$alignBottom
+		]),
+	_List_fromArray(
+		[
+			$mdgriffith$elm_ui$Element$text('Developed by Gergely Malinoczki')
+		]));
+var $mdgriffith$elm_ui$Element$padding = function (x) {
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$padding,
+		A5(
+			$mdgriffith$elm_ui$Internal$Model$PaddingStyle,
+			'p-' + $elm$core$String$fromInt(x),
+			x,
+			x,
 			x,
 			x));
 };
@@ -17652,6 +17864,7 @@ var $author$project$Main$SearchBarChanged = function (a) {
 };
 var $author$project$Main$SearchBarGetsFocus = {$: 'SearchBarGetsFocus'};
 var $author$project$Main$SearchBarLosesFocus = {$: 'SearchBarLosesFocus'};
+var $mdgriffith$elm_ui$Element$htmlAttribute = $mdgriffith$elm_ui$Internal$Model$Attr;
 var $mdgriffith$elm_ui$Element$Input$HiddenLabel = function (a) {
 	return {$: 'HiddenLabel', a: a};
 };
@@ -17662,16 +17875,6 @@ var $mdgriffith$elm_ui$Internal$Model$PseudoSelector = F2(
 		return {$: 'PseudoSelector', a: a, b: b};
 	});
 var $mdgriffith$elm_ui$Internal$Flag$focus = $mdgriffith$elm_ui$Internal$Flag$flag(31);
-var $mdgriffith$elm_ui$Internal$Model$AlignY = function (a) {
-	return {$: 'AlignY', a: a};
-};
-var $mdgriffith$elm_ui$Internal$Model$Class = F2(
-	function (a, b) {
-		return {$: 'Class', a: a, b: b};
-	});
-var $mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
-	return {$: 'Describe', a: a};
-};
 var $mdgriffith$elm_ui$Internal$Model$Nearby = F2(
 	function (a, b) {
 		return {$: 'Nearby', a: a, b: b};
@@ -17827,7 +18030,6 @@ var $mdgriffith$elm_ui$Element$Border$shadow = function (almostShade) {
 			'box-shadow',
 			$mdgriffith$elm_ui$Internal$Model$formatBoxShadow(shade)));
 };
-var $author$project$Main$white = A3($mdgriffith$elm_ui$Element$rgb255, 255, 255, 255);
 var $author$project$Main$noFocusShadow = $mdgriffith$elm_ui$Element$focused(
 	_List_fromArray(
 		[
@@ -18054,28 +18256,6 @@ var $mdgriffith$elm_ui$Element$rgb = F3(
 		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, r, g, b, 1);
 	});
 var $mdgriffith$elm_ui$Element$Input$darkGrey = A3($mdgriffith$elm_ui$Element$rgb, 186 / 255, 189 / 255, 182 / 255);
-var $mdgriffith$elm_ui$Element$paddingXY = F2(
-	function (x, y) {
-		return _Utils_eq(x, y) ? A2(
-			$mdgriffith$elm_ui$Internal$Model$StyleClass,
-			$mdgriffith$elm_ui$Internal$Flag$padding,
-			A5(
-				$mdgriffith$elm_ui$Internal$Model$PaddingStyle,
-				'p-' + $elm$core$String$fromInt(x),
-				x,
-				x,
-				x,
-				x)) : A2(
-			$mdgriffith$elm_ui$Internal$Model$StyleClass,
-			$mdgriffith$elm_ui$Internal$Flag$padding,
-			A5(
-				$mdgriffith$elm_ui$Internal$Model$PaddingStyle,
-				'p-' + ($elm$core$String$fromInt(x) + ('-' + $elm$core$String$fromInt(y))),
-				y,
-				x,
-				y,
-				x));
-	});
 var $mdgriffith$elm_ui$Element$Input$defaultTextPadding = A2($mdgriffith$elm_ui$Element$paddingXY, 12, 12);
 var $mdgriffith$elm_ui$Element$Input$white = A3($mdgriffith$elm_ui$Element$rgb, 1, 1, 1);
 var $mdgriffith$elm_ui$Internal$Model$BorderWidth = F5(
@@ -18195,7 +18375,6 @@ var $mdgriffith$elm_ui$Element$Input$isStacked = function (label) {
 var $mdgriffith$elm_ui$Element$Input$negateBox = function (box) {
 	return {bottom: -box.bottom, left: -box.left, right: -box.right, top: -box.top};
 };
-var $mdgriffith$elm_ui$Element$htmlAttribute = $mdgriffith$elm_ui$Internal$Model$Attr;
 var $mdgriffith$elm_ui$Element$Input$isFill = function (len) {
 	isFill:
 	while (true) {
@@ -18762,12 +18941,6 @@ var $mdgriffith$elm_ui$Element$Input$search = $mdgriffith$elm_ui$Element$Input$t
 		spellchecked: false,
 		type_: $mdgriffith$elm_ui$Element$Input$TextInputNode('search')
 	});
-var $mdgriffith$elm_ui$Element$Font$size = function (i) {
-	return A2(
-		$mdgriffith$elm_ui$Internal$Model$StyleClass,
-		$mdgriffith$elm_ui$Internal$Flag$fontSize,
-		$mdgriffith$elm_ui$Internal$Model$FontSize(i));
-};
 var $author$project$Main$viewSearchBar = function (model) {
 	var yPad = 0;
 	var spacingVal = 15;
@@ -18826,7 +18999,9 @@ var $author$project$Main$viewSearchBar = function (model) {
 						$mdgriffith$elm_ui$Element$padding(((size.height - fontSize) / 2) | 0),
 						$mdgriffith$elm_ui$Element$Border$width(0),
 						$mdgriffith$elm_ui$Element$Events$onFocus($author$project$Main$SearchBarGetsFocus),
-						$mdgriffith$elm_ui$Element$Events$onLoseFocus($author$project$Main$SearchBarLosesFocus)
+						$mdgriffith$elm_ui$Element$Events$onLoseFocus($author$project$Main$SearchBarLosesFocus),
+						$mdgriffith$elm_ui$Element$htmlAttribute(
+						$elm$html$Html$Attributes$id('home-page-searchbar'))
 					]),
 				{
 					label: $mdgriffith$elm_ui$Element$Input$labelHidden('Search input'),
@@ -18940,8 +19115,6 @@ var $mdgriffith$elm_ui$Element$Input$button = F2(
 				_List_fromArray(
 					[label])));
 	});
-var $mdgriffith$elm_ui$Internal$Flag$fontAlignment = $mdgriffith$elm_ui$Internal$Flag$flag(12);
-var $mdgriffith$elm_ui$Element$Font$center = A2($mdgriffith$elm_ui$Internal$Model$Class, $mdgriffith$elm_ui$Internal$Flag$fontAlignment, $mdgriffith$elm_ui$Internal$Style$classes.textCenter);
 var $author$project$Main$green = A3($mdgriffith$elm_ui$Element$rgb255, 0, 204, 204);
 var $mdgriffith$elm_ui$Element$moveDown = function (y) {
 	return A2(
@@ -19017,6 +19190,14 @@ var $author$project$Main$viewHomePage = function (model) {
 				$author$project$Main$viewSearchButton
 			]));
 };
+var $author$project$Main$getCurrentPage = function (route) {
+	if (route.$ === 'SearchResultsPage') {
+		var parameters = route.a;
+		return parameters.page;
+	} else {
+		return $elm$core$Maybe$Nothing;
+	}
+};
 var $mdgriffith$elm_ui$Internal$Model$Top = {$: 'Top'};
 var $mdgriffith$elm_ui$Element$alignTop = $mdgriffith$elm_ui$Internal$Model$AlignY($mdgriffith$elm_ui$Internal$Model$Top);
 var $author$project$Main$grey = A3($mdgriffith$elm_ui$Element$rgb255, 105, 105, 105);
@@ -19062,25 +19243,6 @@ var $mdgriffith$elm_ui$Element$mouseOver = function (decs) {
 			$mdgriffith$elm_ui$Internal$Model$Hover,
 			$mdgriffith$elm_ui$Internal$Model$unwrapDecorations(decs)));
 };
-var $mdgriffith$elm_ui$Internal$Model$Paragraph = {$: 'Paragraph'};
-var $mdgriffith$elm_ui$Element$paragraph = F2(
-	function (attrs, children) {
-		return A4(
-			$mdgriffith$elm_ui$Internal$Model$element,
-			$mdgriffith$elm_ui$Internal$Model$asParagraph,
-			$mdgriffith$elm_ui$Internal$Model$div,
-			A2(
-				$elm$core$List$cons,
-				$mdgriffith$elm_ui$Internal$Model$Describe($mdgriffith$elm_ui$Internal$Model$Paragraph),
-				A2(
-					$elm$core$List$cons,
-					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-					A2(
-						$elm$core$List$cons,
-						$mdgriffith$elm_ui$Element$spacing(5),
-						attrs))),
-			$mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
-	});
 var $mdgriffith$elm_ui$Element$Border$roundEach = function (_v0) {
 	var topLeft = _v0.topLeft;
 	var topRight = _v0.topRight;
@@ -19125,7 +19287,8 @@ var $author$project$Main$viewCharacterResult = F2(
 						$mdgriffith$elm_ui$Element$Background$color($author$project$Main$grey),
 						$mdgriffith$elm_ui$Element$width(
 						$mdgriffith$elm_ui$Element$px(200)),
-						$mdgriffith$elm_ui$Element$Border$rounded(20)
+						$mdgriffith$elm_ui$Element$Border$rounded(20),
+						$mdgriffith$elm_ui$Element$centerX
 					]),
 				_Utils_ap(
 					_List_fromArray(
@@ -19251,7 +19414,8 @@ var $author$project$Main$viewCharacterResult = F2(
 						$mdgriffith$elm_ui$Element$px(180)),
 						$mdgriffith$elm_ui$Element$width(
 						$mdgriffith$elm_ui$Element$px(500)),
-						$mdgriffith$elm_ui$Element$Border$rounded(20)
+						$mdgriffith$elm_ui$Element$Border$rounded(20),
+						$mdgriffith$elm_ui$Element$centerX
 					]),
 				_Utils_ap(
 					_List_fromArray(
@@ -19284,7 +19448,151 @@ var $author$project$Main$viewCharacterResult = F2(
 			return horizontalLook(textInfoPart);
 		}
 	});
+var $author$project$Main$GoToPage = function (a) {
+	return {$: 'GoToPage', a: a};
+};
+var $author$project$Main$Next = {$: 'Next'};
+var $author$project$Main$PageNum = function (a) {
+	return {$: 'PageNum', a: a};
+};
+var $author$project$Main$Prev = {$: 'Prev'};
+var $mdgriffith$elm_ui$Element$Font$underline = $mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.underline);
+var $author$project$Main$viewSearchPageNavigation = F3(
+	function (currentPageArg, info, device) {
+		var prevNextAttribute = _List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$Background$color($author$project$Main$green),
+				$mdgriffith$elm_ui$Element$Border$rounded(10),
+				$mdgriffith$elm_ui$Element$height(
+				$mdgriffith$elm_ui$Element$px(30)),
+				$mdgriffith$elm_ui$Element$width(
+				$mdgriffith$elm_ui$Element$px(60)),
+				$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
+				$mdgriffith$elm_ui$Element$Font$center,
+				$mdgriffith$elm_ui$Element$Font$underline,
+				$author$project$Main$noFocusShadow
+			]);
+		var prevButton = function () {
+			var _v4 = info.prev;
+			if (_v4.$ === 'Nothing') {
+				return $mdgriffith$elm_ui$Element$none;
+			} else {
+				return A2(
+					$mdgriffith$elm_ui$Element$Input$button,
+					prevNextAttribute,
+					{
+						label: $mdgriffith$elm_ui$Element$text('Prev'),
+						onPress: $elm$core$Maybe$Just(
+							$author$project$Main$GoToPage($author$project$Main$Prev))
+					});
+			}
+		}();
+		var pageNumberButton = function (num) {
+			return A2(
+				$mdgriffith$elm_ui$Element$Input$button,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$Background$color($author$project$Main$green),
+						$mdgriffith$elm_ui$Element$Border$rounded(10),
+						$mdgriffith$elm_ui$Element$height(
+						$mdgriffith$elm_ui$Element$px(30)),
+						$mdgriffith$elm_ui$Element$padding(5),
+						$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
+						$mdgriffith$elm_ui$Element$Font$center,
+						$author$project$Main$noFocusShadow
+					]),
+				{
+					label: $mdgriffith$elm_ui$Element$text(
+						$elm$core$String$fromInt(num)),
+					onPress: $elm$core$Maybe$Just(
+						$author$project$Main$GoToPage(
+							$author$project$Main$PageNum(num)))
+				});
+		};
+		var nextButton = function () {
+			var _v3 = info.next;
+			if (_v3.$ === 'Nothing') {
+				return $mdgriffith$elm_ui$Element$none;
+			} else {
+				return A2(
+					$mdgriffith$elm_ui$Element$Input$button,
+					prevNextAttribute,
+					{
+						label: $mdgriffith$elm_ui$Element$text('Next'),
+						onPress: $elm$core$Maybe$Just(
+							$author$project$Main$GoToPage($author$project$Main$Next))
+					});
+			}
+		}();
+		var currentPageRadius = function () {
+			var _v1 = device._class;
+			if (_v1.$ === 'Phone') {
+				var _v2 = device.orientation;
+				if (_v2.$ === 'Portrait') {
+					return 1;
+				} else {
+					return 2;
+				}
+			} else {
+				return 3;
+			}
+		}();
+		var showThesePageNums = F2(
+			function (pages, currentPage) {
+				if (pages <= 5) {
+					return A2(
+						$elm$core$List$map,
+						pageNumberButton,
+						A2($elm$core$List$range, 1, pages));
+				} else {
+					var upperBound = A2($elm$core$Basics$min, pages, currentPage + currentPageRadius);
+					var lowerBound = A2($elm$core$Basics$max, 1, currentPage - currentPageRadius);
+					return _Utils_ap(
+						_List_fromArray(
+							[
+								(lowerBound > 1) ? $mdgriffith$elm_ui$Element$text('...') : $mdgriffith$elm_ui$Element$none
+							]),
+						_Utils_ap(
+							A2(
+								$elm$core$List$map,
+								pageNumberButton,
+								A2($elm$core$List$range, lowerBound, upperBound)),
+							_List_fromArray(
+								[
+									(_Utils_cmp(upperBound, pages) < 0) ? $mdgriffith$elm_ui$Element$text('...') : $mdgriffith$elm_ui$Element$none
+								])));
+				}
+			});
+		var _v0 = info.pages;
+		if (_v0 === 1) {
+			return $mdgriffith$elm_ui$Element$none;
+		} else {
+			return A2(
+				$mdgriffith$elm_ui$Element$row,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$centerX,
+						$mdgriffith$elm_ui$Element$spacing(15)
+					]),
+				_Utils_ap(
+					_List_fromArray(
+						[prevButton]),
+					_Utils_ap(
+						A2(showThesePageNums, info.pages, currentPageArg),
+						_List_fromArray(
+							[nextButton]))));
+		}
+	});
 var $author$project$Main$viewResultsPage = function (model) {
+	var currentPage = function () {
+		var _v1 = $author$project$Main$getCurrentPage(model.route);
+		if (_v1.$ === 'Just') {
+			var pageNum = _v1.a;
+			return pageNum;
+		} else {
+			return 0;
+		}
+	}();
 	var _v0 = model.searchResult;
 	if (_v0.$ === 'Result') {
 		var charRequest = _v0.a;
@@ -19296,10 +19604,15 @@ var $author$project$Main$viewResultsPage = function (model) {
 					$mdgriffith$elm_ui$Element$padding(10),
 					$mdgriffith$elm_ui$Element$spacing(5)
 				]),
-			A2(
-				$elm$core$List$map,
-				$author$project$Main$viewCharacterResult(model.device),
-				charRequest.results));
+			_Utils_ap(
+				A2(
+					$elm$core$List$map,
+					$author$project$Main$viewCharacterResult(model.device),
+					charRequest.results),
+				_List_fromArray(
+					[
+						A3($author$project$Main$viewSearchPageNavigation, currentPage, charRequest.info, model.device)
+					])));
 	} else {
 		return $mdgriffith$elm_ui$Element$text('Something went wrong tetya');
 	}
@@ -19471,12 +19784,12 @@ var $author$project$Main$view = function (model) {
 								case 'About':
 									return $author$project$Main$viewAboutPage(model);
 								case 'SearchResultsPage':
-									var resultTo = _v0.a;
 									return $author$project$Main$viewResultsPage(model);
 								default:
 									return $mdgriffith$elm_ui$Element$text('page not found');
 							}
-						}()
+						}(),
+							$author$project$Main$viewFooter
 						])))
 			]),
 		title: 'Rick and Morty db'
@@ -19484,4 +19797,4 @@ var $author$project$Main$view = function (model) {
 };
 var $author$project$Main$main = $elm$browser$Browser$application(
 	{init: $author$project$Main$init, onUrlChange: $author$project$Main$UrlChange, onUrlRequest: $author$project$Main$UrlRequest, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
-_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.Character":{"args":[],"type":"{ id : Basics.Int, name : String.String, status : Main.Status, species : String.String, subType : String.String, gender : String.String, origin : Main.CharacterOriginLocation, location : Main.CharacterOriginLocation, image : String.String, episode : List.List String.String, url : String.String }"},"Main.CharacterOriginLocation":{"args":[],"type":"{ name : String.String, url : String.String }"},"Main.CharacterRequest":{"args":[],"type":"{ info : Main.RequestInfo, results : List.List Main.Character }"},"Main.RequestInfo":{"args":[],"type":"{ count : Basics.Int, pages : Basics.Int, next : Maybe.Maybe String.String, prev : Maybe.Maybe String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"WindowResized":["Basics.Int","Basics.Int"],"SearchBarChanged":["String.String"],"SearchButtonPressed":[],"GotSearchResult":["String.String","Result.Result Http.Error Main.CharacterRequest"],"SearchBarGetsFocus":[],"SearchBarLosesFocus":[],"KeyPress":["Main.Key"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Main.Key":{"args":[],"tags":{"Enter":[],"NonEnter":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Main.Status":{"args":[],"tags":{"Alive":[],"Dead":[],"Unknown":[],"InvalidStatus":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}}}}})}});}(this));
+_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.Character":{"args":[],"type":"{ id : Basics.Int, name : String.String, status : Main.Status, species : String.String, subType : String.String, gender : String.String, origin : Main.CharacterOriginLocation, location : Main.CharacterOriginLocation, image : String.String, episode : List.List String.String, url : String.String }"},"Main.CharacterOriginLocation":{"args":[],"type":"{ name : String.String, url : String.String }"},"Main.CharacterRequest":{"args":[],"type":"{ info : Main.RequestInfo, results : List.List Main.Character }"},"Main.RequestInfo":{"args":[],"type":"{ count : Basics.Int, pages : Basics.Int, next : Maybe.Maybe String.String, prev : Maybe.Maybe String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"WindowResized":["Basics.Int","Basics.Int"],"SearchBarChanged":["String.String"],"SearchButtonPressed":[],"GotSearchResult":["String.String","Result.Result Http.Error Main.CharacterRequest"],"SearchBarGetsFocus":[],"SearchBarLosesFocus":[],"KeyPress":["Main.Key"],"GoToPage":["Main.Navigate"],"NoOp":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Main.Key":{"args":[],"tags":{"Enter":[],"NonEnter":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Main.Navigate":{"args":[],"tags":{"Next":[],"Prev":[],"PageNum":["Basics.Int"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Main.Status":{"args":[],"tags":{"Alive":[],"Dead":[],"Unknown":[],"InvalidStatus":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}}}}})}});}(this));

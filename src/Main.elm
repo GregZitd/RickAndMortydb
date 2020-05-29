@@ -3,6 +3,8 @@ module Main exposing (..)
 import Browser
 import Browser.Events
 import Browser.Navigation as Nav
+import Browser.Dom as Dom
+import Task
 import Http
 import Url
 import Url.Parser as UP exposing ((<?>))
@@ -11,6 +13,7 @@ import Json.Decode as D
 import Json.Encode as E
 import Json.Decode.Pipeline as DP exposing (required, optional)
 import Html exposing (Html)
+import Html.Attributes
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
@@ -67,15 +70,23 @@ type Route =
       Home
     | About
     | NotFound
-    | SearchResultsPage (Maybe String)
+    | SearchResultsPage SearchResultsPageParameters
       
-
+type alias SearchResultsPageParameters =
+    { charname : Maybe String
+    , page : Maybe Int
+    }
+    
 routeParser : UP.Parser (Route -> a) a
 routeParser =
     UP.oneOf
         [ UP.map Home UP.top
         , UP.map About <| UP.s "About"
-        , UP.map SearchResultsPage <| UP.s "search" <?> Query.string "charname"
+        , UP.map SearchResultsPage
+            <|  UP.s "search" <?>
+                   ( Query.map2 SearchResultsPageParameters
+                                (Query.string "charname" )
+                                ( Query.int "page" ) )
         ]
 
 toRoute : Url.Url -> Route
@@ -101,12 +112,16 @@ init flags url key =
 
     in case D.decodeValue decodeFlags flags of
            Ok flagsDecoded ->
-               initiateSearchFromUrl
-                    { model | device = windowToDevice
-                                           flagsDecoded.width
-                                           flagsDecoded.height
-                            , windowSize = Flags flagsDecoded.width flagsDecoded.height
-                    }
+               let (initModel,initCmdMsg) =
+                     initiateSearchFromUrl
+                        { model | device = windowToDevice
+                                               flagsDecoded.width
+                                               flagsDecoded.height
+                                , windowSize = Flags
+                                                  flagsDecoded.width
+                                                  flagsDecoded.height
+                        }
+               in ( initModel, Cmd.batch [ initCmdMsg, focusSearchBox ] )
                
            Err _ ->
                ( model, Cmd.none )
@@ -142,6 +157,8 @@ type Msg =
     | SearchBarGetsFocus
     | SearchBarLosesFocus
     | KeyPress Key
+    | GoToPage Navigate
+    | NoOp
       
 type SearchResult =
       Failure Http.Error
@@ -214,6 +231,47 @@ update msg model =
                 NonEnter ->
                     ( model, Cmd.none )
 
+        GoToPage navigate ->
+            let newPageNum =
+                    case model.route of
+                        SearchResultsPage parameters ->
+                            case navigate of
+                                Next ->
+                                    ( Maybe.withDefault 0 parameters.page ) + 1
+                                Prev ->
+                                    (Maybe.withDefault 0 parameters.page ) - 1
+                                PageNum num ->
+                                    num
+                                    --This 1 here is just a dummy value. Should change it in the future for something that makes sense!!!
+                        _ -> 1
+            in case model.route of
+                   SearchResultsPage parameters ->
+                       ( model, Cmd.batch
+                                    [ Nav.pushUrl model.key
+                                            ( searchParametersToString
+                                                  { parameters |
+                                                        page = Just newPageNum
+                                                  }
+                                            )
+                                    , resetViewport
+                                    ]
+                       )
+                   _ ->
+                       ( model, Cmd.none )
+
+        NoOp ->
+            ( model, Cmd.none )
+                           
+
+resetViewport : Cmd Msg
+resetViewport =
+    Task.perform (\_ -> NoOp) (Dom.setViewport 0 0)
+
+searchParametersToString : SearchResultsPageParameters -> String
+searchParametersToString parameters =
+    let page = Maybe.withDefault 0 parameters.page
+        charname = Maybe.withDefault "" parameters.charname
+    in "/search?charname=" ++ charname ++ "&page=" ++ ( String.fromInt page )
 
             
 searchButtonPressed : Model -> (Model,Cmd Msg)
@@ -222,24 +280,41 @@ searchButtonPressed model =
              "" -> ( model, Cmd.none )
              _ -> ( model, Nav.pushUrl
                                 model.key
-                                ( "/search?charname=" ++ model.searchBarContent ) )
+                                ( "/search?charname="
+                                  ++ model.searchBarContent
+                                  ++ "&page=1" ) )
 
 initiateSearchFromUrl : Model -> (Model,Cmd Msg)
 initiateSearchFromUrl model  =
      case model.route of
-                   SearchResultsPage searchUrl ->
-                       case searchUrl of
+                   SearchResultsPage parameters ->
+                       case parameters.charname of
 
                            Just searchTerm ->
-                               getStuff searchTerm model
+                               case parameters.page of
+                                   Just page ->
+                                       getStuff searchTerm page model
+
+                                   Nothing ->
+                                       ( { model | route = NotFound }
+                                       , Cmd.none
+                                       )
 
                            Nothing ->
                                ( { model | route = NotFound }
                                , Cmd.none
                                )
 
+                   Home ->
+                       ( model, focusSearchBox )
+                   
                    _ ->
                        ( model, Cmd.none )
+
+focusSearchBox : Cmd Msg
+focusSearchBox =
+    Task.attempt (\_ -> NoOp) (Dom.focus "home-page-searchbar")
+
 --SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
@@ -283,27 +358,52 @@ view model =
                             viewHomePage model
                         About ->
                             viewAboutPage model
-                        SearchResultsPage resultTo ->
+                        SearchResultsPage _ ->
                             viewResultsPage model
                         NotFound ->
                             text "page not found"
+                  , viewFooter
                   ]
         ]
     }
 
+viewFooter : Element Msg
+viewFooter =
+    paragraph
+        [ Font.center
+        , Font.color white
+        , Font.size 12
+        , paddingXY 0 30
+        , alignBottom
+        ] <|
+        [ text "Developed by Gergely Malinoczki" ]
+
+
+
 viewResultsPage : Model -> Element Msg
 viewResultsPage model =
-    case model.searchResult of
-        Result charRequest ->
-            column
-                [ centerX
-                , padding 10
-                , spacing 5
-                ] <|
-                List.map ( viewCharacterResult model.device ) charRequest.results
-        _ -> text "Something went wrong tetya"
+    let currentPage =
+            case getCurrentPage model.route of
+                Just pageNum -> pageNum
+                Nothing -> 0
+    in case model.searchResult of
+           Result charRequest ->
+               column
+                   [ centerX
+                   , padding 10
+                   , spacing 5
+                   ] <|
+                   List.map ( viewCharacterResult model.device ) charRequest.results
+                   ++ [ viewSearchPageNavigation
+                            currentPage charRequest.info model.device]
+           _ -> text "Something went wrong tetya"
         
-
+getCurrentPage : Route -> Maybe Int
+getCurrentPage route =
+    case route of
+        SearchResultsPage parameters -> parameters.page
+        _ -> Nothing
+                                
 viewHomePage : Model -> Element Msg
 viewHomePage model =
     column
@@ -379,6 +479,7 @@ viewSearchBar model =
             , Border.width 0
             , Events.onFocus SearchBarGetsFocus
             , Events.onLoseFocus SearchBarLosesFocus
+            , htmlAttribute (Html.Attributes.id "home-page-searchbar")
             ]
             { onChange = SearchBarChanged
             , text = model.searchBarContent
@@ -544,69 +645,6 @@ viewTopBarButton url label =
 grey : Color
 grey = rgb255 105 105 105
 
-viewCharacterResultPC : Character -> Element Msg
-viewCharacterResultPC character =
-    let viewSpecies species subType =
-            case subType of
-                "" -> species
-                _ -> species ++ " - " ++ subType
-    in row
-          [ Background.color grey
-          , height <| px 150
-          , width <| px 450
-          , Border.rounded 20
-          ]
-          [ el
-              [ height <| px 150
-              , width <| px 150
-              , Border.roundEach
-                  { topLeft = 20
-                  , topRight = 0
-                  , bottomLeft = 20
-                  , bottomRight = 0
-                  }
-              , Background.uncropped character.image
-              ]
-              none
-          ,column
-              [ padding 10
-              , spacing 15
-              , alignTop
-              ]
-              [ link
-                   [ Font.bold
-                   , mouseOver [ Font.color green ]
-                   ]
-                   { url = character.url
-                   , label = text character.name
-                   }
-              , column
-                  [ spacing 5]
-                  [ el
-                      [ Font.size 15
-                      , Font.color <| rgb255 211 211 211
-                      ] <|
-                      text "Status:"
-                  , el
-                      [
-                      ] <|
-                      text ( statusToString character.status )
-                  ]
-              , column
-                  [ spacing 5]
-                  [ el
-                      [ Font.size 15
-                      , Font.color <| rgb255 211 211 211
-                      ] <|
-                      text "Species:"
-                  , el
-                      [
-                      ] <|
-                      text <| viewSpecies character.species character.subType
-                  ]
-              ]
-          ]
-
 viewCharacterResult : Device -> Character -> Element Msg
 viewCharacterResult device character =
     let viewSpecies species subType =
@@ -662,6 +700,7 @@ viewCharacterResult device character =
                    , height <| px 180
                    , width <| px 500
                    , Border.rounded 20
+                   , centerX
                    ] <| 
                    [ el
                        [ height <| px 180
@@ -683,6 +722,7 @@ viewCharacterResult device character =
                   [ Background.color grey
                   , width <| px 200
                   , Border.rounded 20
+                  , centerX
                   ] <|
                   [ el
                       [ height <| px 200
@@ -719,16 +759,109 @@ statusToString status =
         Unknown -> "unknown"
         InvalidStatus -> "Invalid status"
 
+viewSearchPageNavigation : Int -> RequestInfo -> Device -> Element Msg
+viewSearchPageNavigation currentPageArg info device =
+    let currentPageRadius =
+            case device.class of
+                Phone ->
+                    case device.orientation of
+                        Portrait -> 1
+                        Landscape -> 2
+                _ -> 3
+                     
+        showThesePageNums : Int-> Int -> List (Element Msg)
+        showThesePageNums pages currentPage =
+            if pages <= 5 then
+                List.map pageNumberButton ( List.range 1 pages )
+            else
+                let lowerBound = max 1 (currentPage - currentPageRadius)
+                    upperBound = min pages (currentPage + currentPageRadius)
+                in     [ if lowerBound > 1 then text "..." else none ]
+                    ++ List.map pageNumberButton ( List.range lowerBound upperBound )
+                    ++ [ if upperBound < pages then text "..." else none ]
+                        
+        prevNextAttribute =
+            [ Background.color green
+            , Border.rounded 10
+            , height <| px 30
+            , width <| px 60
+            , Font.color black
+            , Font.center
+            , Font.underline
+            , noFocusShadow
+            ]
+            
+        prevButton =
+            case info.prev of
+                Nothing ->
+                    none
+                Just _ ->
+                    Input.button
+                        prevNextAttribute
+                        { onPress = Just ( GoToPage Prev )
+                        , label = text "Prev"
+                        }
+                        
+        nextButton =
+            case info.next of
+                Nothing ->
+                    none
+                Just _ ->
+                    Input.button
+                        prevNextAttribute
+                        { onPress = Just ( GoToPage Next )
+                        , label = text "Next"
+                        }
+                        
+        pageNumberButton : Int -> Element Msg
+        pageNumberButton num =
+            Input.button
+                [ Background.color green
+                , Border.rounded 10
+                , height <| px 30
+                , padding 5
+                , Font.color black
+                , Font.center
+                , noFocusShadow
+                ]
+                { onPress = Just ( GoToPage <| PageNum num )
+                , label = text <| String.fromInt num
+                }
+                
+    in case info.pages of
+           1 ->
+               --dont show navigation if there is only one page
+               none
+           _ ->
+               row
+                  [ centerX
+                  , spacing 15
+                  ] <|
+                  [ prevButton ]
+                  ++ showThesePageNums info.pages currentPageArg
+                  ++ [ nextButton
+                     ]
+--helper for searcpagenavigation      
+
+
+type Navigate =
+      Next
+    | Prev
+    | PageNum Int
+   
+       
 --HTTP
 
 --initiates search and sets lastRequest to the search term to avoid http race conditions
-getStuff : String -> Model -> ( Model, Cmd Msg )
-getStuff searchTerm model =
+getStuff : String -> Int -> Model -> ( Model, Cmd Msg )
+getStuff searchTerm page model =
     let newModel = { model | lastRequestSent = searchTerm }
     in ( newModel
        , Http.get
            { url = "https://rickandmortyapi.com/api/character/?name="
                  ++ searchTerm
+                 ++ "&page="
+                 ++ ( String.fromInt page )
            , expect = Http.expectJson
                           (GotSearchResult searchTerm)
                               decodeCharacterRequest
