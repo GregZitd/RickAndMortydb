@@ -12,7 +12,7 @@ import Url.Parser.Query as Query
 import Json.Decode as D
 import Json.Encode as E
 import Json.Decode.Pipeline as DP exposing (required, optional)
-import Html exposing (Html)
+import Html
 import Html.Attributes
 import Element exposing (..)
 import Element.Background as Background
@@ -20,6 +20,7 @@ import Element.Font as Font
 import Element.Input as Input
 import Element.Border as Border
 import Element.Events as Events
+import Element.Region as Region
 
 
 --MAIN
