@@ -7,7 +7,7 @@ import Browser.Dom as Dom
 import Task
 import Http
 import Url
-import Url.Parser as UP exposing ((<?>))
+import Url.Parser as UP exposing ((<?>), (</>))
 import Url.Parser.Query as Query
 import Json.Decode as D
 import Json.Encode as E
@@ -59,18 +59,20 @@ type alias Character =
     , url : String
     }
 
-
 type Status =
       Alive
     | Dead
     | Unknown
     | InvalidStatus
 
+-- ROUTE PARSING
+
 type Route =
       Home
     | About
     | NotFound
     | SearchResultsPage SearchResultsPageParameters
+    | CharacterPage Int
       
 type alias SearchResultsPageParameters =
     { charname : Maybe String
@@ -87,6 +89,7 @@ routeParser =
                    ( Query.map2 SearchResultsPageParameters
                                 (Query.string "charname" )
                                 ( Query.int "page" ) )
+        , UP.map CharacterPage <| UP.s "character" </> UP.int
         ]
 
 toRoute : Url.Url -> Route
@@ -113,7 +116,7 @@ init flags url key =
     in case D.decodeValue decodeFlags flags of
            Ok flagsDecoded ->
                let (initModel,initCmdMsg) =
-                     initiateSearchFromUrl
+                     handleUrlChange
                         { model | device = windowToDevice
                                                flagsDecoded.width
                                                flagsDecoded.height
@@ -125,6 +128,8 @@ init flags url key =
                
            Err _ ->
                ( model, Cmd.none )
+
+-- JS FLAGS
 
 type alias Flags =
     { width : Int
@@ -153,7 +158,8 @@ type Msg =
     | WindowResized Int Int
     | SearchBarChanged String
     | SearchButtonPressed
-    | GotSearchResult String (Result Http.Error CharacterRequest)
+    | GotCharacterSearchResult String (Result Http.Error CharacterRequest)
+    | GotSingleCharacter (Result Http.Error Character)
     | SearchBarGetsFocus
     | SearchBarLosesFocus
     | KeyPress Key
@@ -163,7 +169,8 @@ type Msg =
 type SearchResult =
       Failure Http.Error
     | Loading
-    | Result CharacterRequest
+    | CharacterSearch CharacterRequest
+    | SingleCharacter Character
     | NoSearchInitiated
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -174,7 +181,7 @@ update msg model =
                     { model | url = url
                     , route = toRoute url
                     }
-            in initiateSearchFromUrl newModel
+            in handleUrlChange newModel
                                                
         UrlRequest urlRequest ->
             case urlRequest of
@@ -199,20 +206,31 @@ update msg model =
         SearchButtonPressed ->
             searchButtonPressed model
     
-        GotSearchResult responseTo result ->
+        GotCharacterSearchResult responseTo result ->
             case responseTo == model.lastRequestSent of
                 False ->
                     ( model, Cmd.none )
                 True ->
                     case result of
                         Ok characterList ->
-                            ( { model | searchResult = Result characterList }
+                            ( { model | searchResult = CharacterSearch characterList }
                               ,Cmd.none
                             )
                         Err err ->
                             ( { model | searchResult = Failure err }
                             , Cmd.none
                             )
+
+        GotSingleCharacter result ->
+            case result of
+                Ok character ->
+                    ( { model | searchResult = SingleCharacter character }
+                    , Cmd.none
+                    )
+                Err err ->
+                    ( { model | searchResult = Failure err }
+                    , Cmd.none
+                    )
 
         SearchBarGetsFocus ->
             ( { model | searchBarFocused = True }, Cmd.none )
@@ -263,9 +281,7 @@ update msg model =
             ( model, Cmd.none )
                            
 
-resetViewport : Cmd Msg
-resetViewport =
-    Task.perform (\_ -> NoOp) (Dom.setViewport 0 0)
+
 
 searchParametersToString : SearchResultsPageParameters -> String
 searchParametersToString parameters =
@@ -284,8 +300,8 @@ searchButtonPressed model =
                                   ++ model.searchBarContent
                                   ++ "&page=1" ) )
 
-initiateSearchFromUrl : Model -> (Model,Cmd Msg)
-initiateSearchFromUrl model  =
+handleUrlChange : Model -> (Model,Cmd Msg)
+handleUrlChange model  =
      case model.route of
                    SearchResultsPage parameters ->
                        case parameters.charname of
@@ -293,7 +309,7 @@ initiateSearchFromUrl model  =
                            Just searchTerm ->
                                case parameters.page of
                                    Just page ->
-                                       getStuff searchTerm page model
+                                       getCharacterSearch searchTerm page model
 
                                    Nothing ->
                                        ( { model | route = NotFound }
@@ -307,13 +323,20 @@ initiateSearchFromUrl model  =
 
                    Home ->
                        ( model, focusSearchBox )
-                   
+
+                   CharacterPage charId ->
+                       ( model, getSingleCaracter charId )
+                           
                    _ ->
                        ( model, Cmd.none )
 
 focusSearchBox : Cmd Msg
 focusSearchBox =
     Task.attempt (\_ -> NoOp) (Dom.focus "home-page-searchbar")
+
+resetViewport : Cmd Msg
+resetViewport =
+    Task.perform (\_ -> NoOp) (Dom.setViewport 0 0)
 
 --SUBSCRIPTIONS
 
@@ -362,188 +385,12 @@ view model =
                             viewResultsPage model
                         NotFound ->
                             text "page not found"
+                        CharacterPage charId ->
+                            text <| "character Id: " ++ ( String.fromInt charId )
                   , viewFooter
                   ]
         ]
     }
-
-viewFooter : Element Msg
-viewFooter =
-    paragraph
-        [ Font.center
-        , Font.color white
-        , Font.size 12
-        , paddingXY 0 30
-        , alignBottom
-        ] <|
-        [ text "Developed by Gergely Malinoczki" ]
-
-
-
-viewResultsPage : Model -> Element Msg
-viewResultsPage model =
-    let currentPage =
-            case getCurrentPage model.route of
-                Just pageNum -> pageNum
-                Nothing -> 0
-    in case model.searchResult of
-           Result charRequest ->
-               column
-                   [ centerX
-                   , padding 10
-                   , spacing 5
-                   ] <|
-                   List.map ( viewCharacterResult model.device ) charRequest.results
-                   ++ [ viewSearchPageNavigation
-                            currentPage charRequest.info model.device]
-           _ -> text "Something went wrong tetya"
-        
-getCurrentPage : Route -> Maybe Int
-getCurrentPage route =
-    case route of
-        SearchResultsPage parameters -> parameters.page
-        _ -> Nothing
-                                
-viewHomePage : Model -> Element Msg
-viewHomePage model =
-    column
-        [ width fill
-        , height fill
-        , spacing 50
-        , padding 70
-        ]
-        [ viewHeader model
-        , viewSearchBar model
-        , viewSearchButton
-        ]
-
-viewAboutPage : Model -> Element Msg
-viewAboutPage model =
-    column
-        []
-        [ text "About page"
-        ]
-       
-viewHeader : Model -> Element Msg
-viewHeader model =
-    let size =
-         case model.device.class of
-            Phone -> { width = 400, height = 150 }
-            Tablet -> { width = 550, height = 185 }
-            Desktop -> { width = 700, height = 230 }
-            BigDesktop -> {width = 700, height = 230 }
-    in el
-         [ centerX
-         , height <| px size.height
-         , width <| maximum model.windowSize.width (px size.width)
-         , Background.uncropped "Images/header.jpeg"
-         ]
-         none
-
-
-viewSearchBar : Model -> Element Msg
-viewSearchBar model =
-    let size =
-         case model.device.class of
-             Phone -> { width = 400, height = 40 }
-             Tablet -> { width = 500, height = 50 }
-             _ -> { width = 600, height = 50 }
-        yPad = 0
-        spacingVal = 15
-        fontSize = 25
-    in row
-        [ centerX
-        , Background.color white
-        , Border.rounded 30
-        , width <| maximum (model.windowSize.width - 20) (px size.width)
-        , height <| px size.height
-        , paddingEach { top = yPad
-                      , right = 30
-                      , bottom = yPad
-                      , left = 10
-                      }
-        , spacing spacingVal
-        ]
-        [ el
-            [ Background.uncropped "Images/search_icon.png"
-            , width <| px ( size.height - 15 )
-            , height <| px ( size.height - 15 )
-            ] none
-        , Input.search
-            [ Font.color black
-            , Font.size fontSize
-            , noFocusShadow
-            , width fill
-            , height fill
-            , padding <| (size.height - fontSize) // 2
-            , Border.width 0
-            , Events.onFocus SearchBarGetsFocus
-            , Events.onLoseFocus SearchBarLosesFocus
-            , htmlAttribute (Html.Attributes.id "home-page-searchbar")
-            ]
-            { onChange = SearchBarChanged
-            , text = model.searchBarContent
-            , placeholder = Nothing
-            , label = Input.labelHidden "Search input"
-            }
-        ]
-
-viewSearchButton : Element Msg
-viewSearchButton =
-    Input.button
-        [ Border.rounded 20
-        , width <| px 150
-        , height <| px 40
-        , Background.color green
-        , centerX
-        , Font.center
-        , Font.size 20
-        , Font.color black
-        , Font.bold
-        , noFocusShadow
-        , Border.shadow
-            { offset = (2,2)
-            , size = 1
-            , blur = 0
-            , color = rgb255 0 150 150
-            }
-        , focused
-              [ moveRight 2
-              , moveDown 2
-              , Border.shadow
-                  { offset = (0,0)
-                  , size = 0
-                  , blur = 0
-                  , color = green
-                  }
-              ]
-        ]
-        { onPress = Just SearchButtonPressed
-        , label = text "Search"
-        }
-
-noFocusShadow : Attribute Msg
-noFocusShadow =
-    focused
-        [ Border.shadow
-              { offset = (0,0)
-              , size = 0
-              , blur = 0
-              , color = white
-                        }
-        ]
-    
-black : Color
-black = rgb255 0 0 0
-
-white : Color
-white = rgb255 255 255 255
-
-orange : Color
-orange = rgb255 255 140 0
-         
-green : Color
-green = rgb255 0 204 204
 
 viewTopBar : Model -> Element Msg
 viewTopBar model =
@@ -642,9 +489,44 @@ viewTopBarButton url label =
       ] <| { url = url
            , label = text label
            }
-grey : Color
-grey = rgb255 105 105 105
 
+viewFooter : Element Msg
+viewFooter =
+    paragraph
+        [ Font.center
+        , Font.color white
+        , Font.size 12
+        , paddingXY 0 30
+        , alignBottom
+        ] <|
+        [ text "Developed by Gergely Malinoczki" ]
+
+--VIEW RESULTS PAGE
+
+viewResultsPage : Model -> Element Msg
+viewResultsPage model =
+    let currentPage =
+            case getCurrentPage model.route of
+                Just pageNum -> pageNum
+                Nothing -> 0
+    in case model.searchResult of
+           CharacterSearch charRequest ->
+               column
+                   [ centerX
+                   , padding 10
+                   , spacing 5
+                   ] <|
+                   List.map ( viewCharacterResult model.device ) charRequest.results
+                   ++ [ viewSearchPageNavigation
+                            currentPage charRequest.info model.device]
+           _ -> text "Something went wrong tetya"
+        
+getCurrentPage : Route -> Maybe Int
+getCurrentPage route =
+    case route of
+        SearchResultsPage parameters -> parameters.page
+        _ -> Nothing
+                   
 viewCharacterResult : Device -> Character -> Element Msg
 viewCharacterResult device character =
     let viewSpecies species subType =
@@ -663,7 +545,7 @@ viewCharacterResult device character =
                             [ Font.bold
                             , mouseOver [ Font.color green ]
                             ]
-                            { url = character.url
+                            { url = "character/" ++ ( String.fromInt character.id )
                             , label = text character.name
                             }
                         ]
@@ -749,15 +631,6 @@ viewCharacterResult device character =
                            
            _ ->
                 horizontalLook textInfoPart
-          
-   
-statusToString : Status -> String
-statusToString status =
-    case status of
-        Alive -> "Alive"
-        Dead -> "Dead"
-        Unknown -> "unknown"
-        InvalidStatus -> "Invalid status"
 
 viewSearchPageNavigation : Int -> RequestInfo -> Device -> Element Msg
 viewSearchPageNavigation currentPageArg info device =
@@ -841,20 +714,178 @@ viewSearchPageNavigation currentPageArg info device =
                   ++ showThesePageNums info.pages currentPageArg
                   ++ [ nextButton
                      ]
---helper for searcpagenavigation      
-
 
 type Navigate =
       Next
     | Prev
     | PageNum Int
-   
+
+-- VIEW HOME PAGE
+             
+viewHomePage : Model -> Element Msg
+viewHomePage model =
+    column
+        [ width fill
+        , height fill
+        , spacing 50
+        , padding 70
+        ]
+        [ viewHeader model
+        , viewSearchBar model
+        , viewSearchButton
+        ]
+
+viewHeader : Model -> Element Msg
+viewHeader model =
+    let size =
+         case model.device.class of
+            Phone -> { width = 400, height = 150 }
+            Tablet -> { width = 550, height = 185 }
+            Desktop -> { width = 700, height = 230 }
+            BigDesktop -> {width = 700, height = 230 }
+    in el
+         [ centerX
+         , height <| px size.height
+         , width <| maximum model.windowSize.width (px size.width)
+         , Background.uncropped "Images/header.jpeg"
+         ]
+         none
+
+
+viewSearchBar : Model -> Element Msg
+viewSearchBar model =
+    let size =
+         case model.device.class of
+             Phone -> { width = 400, height = 40 }
+             Tablet -> { width = 500, height = 50 }
+             _ -> { width = 600, height = 50 }
+        yPad = 0
+        spacingVal = 15
+        fontSize = 25
+    in row
+        [ centerX
+        , Background.color white
+        , Border.rounded 30
+        , width <| maximum (model.windowSize.width - 20) (px size.width)
+        , height <| px size.height
+        , paddingEach { top = yPad
+                      , right = 30
+                      , bottom = yPad
+                      , left = 10
+                      }
+        , spacing spacingVal
+        ]
+        [ el
+            [ Background.uncropped "Images/search_icon.png"
+            , width <| px ( size.height - 15 )
+            , height <| px ( size.height - 15 )
+            ] none
+        , Input.search
+            [ Font.color black
+            , Font.size fontSize
+            , noFocusShadow
+            , width fill
+            , height fill
+            , padding <| (size.height - fontSize) // 2
+            , Border.width 0
+            , Events.onFocus SearchBarGetsFocus
+            , Events.onLoseFocus SearchBarLosesFocus
+            , htmlAttribute (Html.Attributes.id "home-page-searchbar")
+            ]
+            { onChange = SearchBarChanged
+            , text = model.searchBarContent
+            , placeholder = Nothing
+            , label = Input.labelHidden "Search input"
+            }
+        ]
+
+viewSearchButton : Element Msg
+viewSearchButton =
+    Input.button
+        [ Border.rounded 20
+        , width <| px 150
+        , height <| px 40
+        , Background.color green
+        , centerX
+        , Font.center
+        , Font.size 20
+        , Font.color black
+        , Font.bold
+        , noFocusShadow
+        , Border.shadow
+            { offset = (2,2)
+            , size = 1
+            , blur = 0
+            , color = rgb255 0 150 150
+            }
+        , focused
+              [ moveRight 2
+              , moveDown 2
+              , Border.shadow
+                  { offset = (0,0)
+                  , size = 0
+                  , blur = 0
+                  , color = green
+                  }
+              ]
+        ]
+        { onPress = Just SearchButtonPressed
+        , label = text "Search"
+        }
+
+-- VIEW ABOUT PAGE
+
+viewAboutPage : Model -> Element Msg
+viewAboutPage model =
+    column
+        []
+        [ text "About page"
+        ]
+       
+-- PALETT
+
+noFocusShadow : Attribute Msg
+noFocusShadow =
+    focused
+        [ Border.shadow
+              { offset = (0,0)
+              , size = 0
+              , blur = 0
+              , color = white
+                        }
+        ]
+    
+black : Color
+black = rgb255 0 0 0
+
+white : Color
+white = rgb255 255 255 255
+
+orange : Color
+orange = rgb255 255 140 0
+         
+green : Color
+green = rgb255 0 204 204
+
+grey : Color
+grey = rgb255 105 105 105
+
+
+
+
+statusToString : Status -> String
+statusToString status =
+    case status of
+        Alive -> "Alive"
+        Dead -> "Dead"
+        Unknown -> "unknown"
+        InvalidStatus -> "Invalid status"
        
 --HTTP
 
 --initiates search and sets lastRequest to the search term to avoid http race conditions
-getStuff : String -> Int -> Model -> ( Model, Cmd Msg )
-getStuff searchTerm page model =
+getCharacterSearch : String -> Int -> Model -> ( Model, Cmd Msg )
+getCharacterSearch searchTerm page model =
     let newModel = { model | lastRequestSent = searchTerm }
     in ( newModel
        , Http.get
@@ -863,10 +894,18 @@ getStuff searchTerm page model =
                  ++ "&page="
                  ++ ( String.fromInt page )
            , expect = Http.expectJson
-                          (GotSearchResult searchTerm)
+                          (GotCharacterSearchResult searchTerm)
                               decodeCharacterRequest
            }
        )
+
+getSingleCaracter : Int -> Cmd Msg
+getSingleCaracter charId =
+    Http.get
+        { url = "https://rickandmortyapi.com/api/character/"
+                ++ ( String.fromInt charId )
+        , expect = Http.expectJson GotSingleCharacter decodeCharacter
+        }
 
 decodeCharacter : D.Decoder Character
 decodeCharacter =
