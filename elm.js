@@ -12075,7 +12075,7 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			case 'GoToPage':
+			case 'GoToResultsPage':
 				var navigate = msg.a;
 				var newPageNum = function () {
 					var _v8 = model.route;
@@ -17894,6 +17894,9 @@ var $mdgriffith$elm_ui$Element$el = F2(
 				_List_fromArray(
 					[child])));
 	});
+var $mdgriffith$elm_ui$Element$explain = function (_v0) {
+	return $mdgriffith$elm_ui$Internal$Model$htmlClass('explain');
+};
 var $mdgriffith$elm_ui$Internal$Model$Max = F2(
 	function (a, b) {
 		return {$: 'Max', a: a, b: b};
@@ -17908,6 +17911,7 @@ var $mdgriffith$elm_ui$Internal$Model$Px = function (a) {
 	return {$: 'Px', a: a};
 };
 var $mdgriffith$elm_ui$Element$px = $mdgriffith$elm_ui$Internal$Model$Px;
+var $elm$core$Debug$todo = _Debug_todo;
 var $mdgriffith$elm_ui$Element$Background$uncropped = function (src) {
 	return $mdgriffith$elm_ui$Internal$Model$Attr(
 		A2($elm$virtual_dom$VirtualDom$style, 'background', 'url(\"' + (src + '\") center / contain no-repeat')));
@@ -17938,6 +17942,13 @@ var $author$project$Main$viewHeader = function (model) {
 					$mdgriffith$elm_ui$Element$maximum,
 					model.windowSize.width,
 					$mdgriffith$elm_ui$Element$px(size.width))),
+				$mdgriffith$elm_ui$Element$explain(
+				_Debug_todo(
+					'Main',
+					{
+						start: {line: 751, column: 20},
+						end: {line: 751, column: 30}
+					})),
 				$mdgriffith$elm_ui$Element$Background$uncropped('Images/header.jpeg')
 			]),
 		$mdgriffith$elm_ui$Element$none);
@@ -19531,8 +19542,8 @@ var $author$project$Main$viewCharacterResult = F2(
 			return horizontalLook(textInfoPart);
 		}
 	});
-var $author$project$Main$GoToPage = function (a) {
-	return {$: 'GoToPage', a: a};
+var $author$project$Main$GoToResultsPage = function (a) {
+	return {$: 'GoToResultsPage', a: a};
 };
 var $author$project$Main$Next = {$: 'Next'};
 var $author$project$Main$PageNum = function (a) {
@@ -19566,7 +19577,7 @@ var $author$project$Main$viewSearchPageNavigation = F3(
 					{
 						label: $mdgriffith$elm_ui$Element$text('Prev'),
 						onPress: $elm$core$Maybe$Just(
-							$author$project$Main$GoToPage($author$project$Main$Prev))
+							$author$project$Main$GoToResultsPage($author$project$Main$Prev))
 					});
 			}
 		}();
@@ -19588,7 +19599,7 @@ var $author$project$Main$viewSearchPageNavigation = F3(
 					label: $mdgriffith$elm_ui$Element$text(
 						$elm$core$String$fromInt(num)),
 					onPress: $elm$core$Maybe$Just(
-						$author$project$Main$GoToPage(
+						$author$project$Main$GoToResultsPage(
 							$author$project$Main$PageNum(num)))
 				});
 		};
@@ -19603,7 +19614,7 @@ var $author$project$Main$viewSearchPageNavigation = F3(
 					{
 						label: $mdgriffith$elm_ui$Element$text('Next'),
 						onPress: $elm$core$Maybe$Just(
-							$author$project$Main$GoToPage($author$project$Main$Next))
+							$author$project$Main$GoToResultsPage($author$project$Main$Next))
 					});
 			}
 		}();
@@ -19884,4 +19895,4 @@ var $author$project$Main$view = function (model) {
 };
 var $author$project$Main$main = $elm$browser$Browser$application(
 	{init: $author$project$Main$init, onUrlChange: $author$project$Main$UrlChange, onUrlRequest: $author$project$Main$UrlRequest, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
-_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.Character":{"args":[],"type":"{ id : Basics.Int, name : String.String, status : Main.Status, species : String.String, subType : String.String, gender : String.String, origin : Main.CharacterOriginLocation, location : Main.CharacterOriginLocation, image : String.String, episode : List.List String.String, url : String.String }"},"Main.CharacterOriginLocation":{"args":[],"type":"{ name : String.String, url : String.String }"},"Main.CharacterRequest":{"args":[],"type":"{ info : Main.RequestInfo, results : List.List Main.Character }"},"Main.RequestInfo":{"args":[],"type":"{ count : Basics.Int, pages : Basics.Int, next : Maybe.Maybe String.String, prev : Maybe.Maybe String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"WindowResized":["Basics.Int","Basics.Int"],"SearchBarChanged":["String.String"],"SearchButtonPressed":[],"GotCharacterSearchResult":["String.String","Result.Result Http.Error Main.CharacterRequest"],"GotSingleCharacter":["Result.Result Http.Error Main.Character"],"SearchBarGetsFocus":[],"SearchBarLosesFocus":[],"KeyPress":["Main.Key"],"GoToPage":["Main.Navigate"],"NoOp":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Main.Key":{"args":[],"tags":{"Enter":[],"NonEnter":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Main.Navigate":{"args":[],"tags":{"Next":[],"Prev":[],"PageNum":["Basics.Int"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Main.Status":{"args":[],"tags":{"Alive":[],"Dead":[],"Unknown":[],"InvalidStatus":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}}}}})}});}(this));
+_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.Character":{"args":[],"type":"{ id : Basics.Int, name : String.String, status : Main.Status, species : String.String, subType : String.String, gender : String.String, origin : Main.CharacterOriginLocation, location : Main.CharacterOriginLocation, image : String.String, episode : List.List String.String, url : String.String }"},"Main.CharacterOriginLocation":{"args":[],"type":"{ name : String.String, url : String.String }"},"Main.CharacterRequest":{"args":[],"type":"{ info : Main.RequestInfo, results : List.List Main.Character }"},"Main.RequestInfo":{"args":[],"type":"{ count : Basics.Int, pages : Basics.Int, next : Maybe.Maybe String.String, prev : Maybe.Maybe String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"WindowResized":["Basics.Int","Basics.Int"],"SearchBarChanged":["String.String"],"SearchButtonPressed":[],"GotCharacterSearchResult":["String.String","Result.Result Http.Error Main.CharacterRequest"],"GotSingleCharacter":["Result.Result Http.Error Main.Character"],"SearchBarGetsFocus":[],"SearchBarLosesFocus":[],"KeyPress":["Main.Key"],"GoToResultsPage":["Main.Navigate"],"NoOp":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Main.Key":{"args":[],"tags":{"Enter":[],"NonEnter":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Main.Navigate":{"args":[],"tags":{"Next":[],"Prev":[],"PageNum":["Basics.Int"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Main.Status":{"args":[],"tags":{"Alive":[],"Dead":[],"Unknown":[],"InvalidStatus":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}}}}})}});}(this));

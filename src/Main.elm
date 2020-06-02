@@ -164,7 +164,7 @@ type Msg =
     | SearchBarGetsFocus
     | SearchBarLosesFocus
     | KeyPress Key
-    | GoToPage Navigate
+    | GoToResultsPage Navigate
     | NoOp
       
 type SearchResult =
@@ -250,7 +250,7 @@ update msg model =
                 NonEnter ->
                     ( model, Cmd.none )
 
-        GoToPage navigate ->
+        GoToResultsPage navigate ->
             let newPageNum =
                     case model.route of
                         SearchResultsPage parameters ->
@@ -672,7 +672,7 @@ viewSearchPageNavigation currentPageArg info device =
                 Just _ ->
                     Input.button
                         prevNextAttribute
-                        { onPress = Just ( GoToPage Prev )
+                        { onPress = Just ( GoToResultsPage Prev )
                         , label = text "Prev"
                         }
                         
@@ -683,7 +683,7 @@ viewSearchPageNavigation currentPageArg info device =
                 Just _ ->
                     Input.button
                         prevNextAttribute
-                        { onPress = Just ( GoToPage Next )
+                        { onPress = Just ( GoToResultsPage Next )
                         , label = text "Next"
                         }
                         
@@ -698,7 +698,7 @@ viewSearchPageNavigation currentPageArg info device =
                 , Font.center
                 , noFocusShadow
                 ]
-                { onPress = Just ( GoToPage <| PageNum num )
+                { onPress = Just ( GoToResultsPage <| PageNum num )
                 , label = text <| String.fromInt num
                 }
                 
@@ -748,9 +748,15 @@ viewHeader model =
          [ centerX
          , height <| px size.height
          , width <| maximum model.windowSize.width (px size.width)
+         , explain Debug.todo
          , Background.uncropped "Images/header.jpeg"
-         ]
+         ] <|
          none
+        {- image
+             []
+             { src = "Images/search_icon.png"
+             , description = "Rick and Morty header"
+             }-}
 
 
 viewSearchBar : Model -> Element Msg
