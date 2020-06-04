@@ -38,13 +38,16 @@ type alias Model =
     { key : Nav.Key
     , url : Url.Url
     , device : Device
-    , windowSize : Flags
+    , windowSize : WindowSize
     , route : Route
     , searchBarContent : String
     , searchResult : SearchResult
     , lastRequestSent : String
     , searchBarFocused : Bool
     }
+
+type alias Height = Int
+type alias Width = Int
 
 type alias Character =
     { id : Int
@@ -106,7 +109,7 @@ init flags url key =
                 { class = Tablet
                 , orientation = Landscape
                 }
-            , windowSize = Flags 0 0
+            , windowSize = WindowSize 0 0
             , route = toRoute url
             , searchBarContent = ""
             , searchResult = NoSearchInitiated
@@ -121,7 +124,7 @@ init flags url key =
                         { model | device = windowToDevice
                                                flagsDecoded.width
                                                flagsDecoded.height
-                                , windowSize = Flags
+                                , windowSize = WindowSize
                                                   flagsDecoded.width
                                                   flagsDecoded.height
                         }
@@ -132,10 +135,24 @@ init flags url key =
 
 -- JS FLAGS
 
-type alias Flags =
+type alias WindowSize =
     { width : Int
     , height : Int
     }
+
+setWindowHeightPc : Float -> WindowSize -> WindowSize
+setWindowHeightPc perc window =
+    let height = window.height
+    in { window | height = percent perc height }
+
+setWindowWidthPc : Float -> WindowSize -> WindowSize
+setWindowWidthPc perc window =
+    let width = window.width
+    in { window | width = percent perc width }
+
+setWindowHeightPx : Int -> WindowSize -> WindowSize
+setWindowHeightPx size window =
+    { window | height = size }
 
 windowToDevice : Int -> Int -> Device
 windowToDevice width height =
@@ -144,9 +161,14 @@ windowToDevice width height =
         , height = height
         }
 
-decodeFlags : D.Decoder Flags
+setWindowWidthPx : Int -> WindowSize -> WindowSize
+setWindowWidthPx size window =
+    { window | width = size }
+
+
+decodeFlags : D.Decoder WindowSize
 decodeFlags =
-    D.map2 Flags
+    D.map2 WindowSize
         (D.field "width" D.int)
         (D.field "height" D.int)
     
@@ -194,7 +216,7 @@ update msg model =
 
         WindowResized width height ->
             ( { model | device = windowToDevice width height
-                      , windowSize = Flags width height
+                      , windowSize = WindowSize width height
               }
             , Cmd.none
             )
@@ -375,32 +397,45 @@ view model =
                   , width fill
                   , height fill
                   , Font.color white
-                  ]
-                  [ viewTopBar model
-                  , case model.route of
-                        Home ->
-                            viewHomePage model
-                        About ->
-                            viewAboutPage model
-                        SearchResultsPage _ ->
-                            viewResultsPage model
-                        NotFound ->
-                            text "page not found"
-                        CharacterPage charId ->
-                            text <| "character Id: " ++ ( String.fromInt charId )
-                  , viewFooter
-                  ]
+                  ] <|
+                     let topBarHeight = percent 7 model.windowSize.height
+                     in [ viewTopBar (setWindowHeightPx topBarHeight model.windowSize)
+                                     model.device
+                                     model.route
+                                     model.searchBarContent
+                        , case model.route of
+                              Home ->
+                                  viewHomePage
+                                      (setWindowHeightPx
+                                           (model.windowSize.height - topBarHeight)
+                                           model.windowSize)
+                                      model.device
+                                      model.searchBarContent
+                              About ->
+                                  viewAboutPage model
+                              SearchResultsPage _ ->
+                                  viewResultsPage
+                                      (setWindowHeightPx
+                                           (model.windowSize.height - topBarHeight)
+                                           model.windowSize)
+                                      model
+                              NotFound ->
+                                  text "page not found"
+                              CharacterPage charId ->
+                                  text <| "character Id: " ++ ( String.fromInt charId )
+                        , viewFooter (setWindowHeightPc 1.5 model.windowSize)
+                        ]
         ]
     }
 
-viewTopBar : Model -> Element Msg
-viewTopBar model =
+viewTopBar : WindowSize -> Device -> Route -> String -> Element Msg
+viewTopBar topBarSize device route searchBarContent=
     let shouldSearchBarShow =
-            case model.route of
+            case route of
                 SearchResultsPage _ ->
-                    case model.device.class of
+                    case device.class of
                         Phone ->
-                            case model.device.orientation of
+                            case device.orientation of
                                 Portrait -> False
                                 Landscape -> True
                         _ -> True
@@ -413,35 +448,45 @@ viewTopBar model =
                     el
                       [ alignLeft
                       ] <|
-                      viewTopBarSearch model topBarHeight
-        topBarHeight = 60
+                      let searchBarHeight = percent 80 topBarSize.height
+                          searchBarWidth = percent 30 topBarSize.width
+                                             -- |> max 350
+                                              --|> min (percent 50 topBarSize.width)
+                      in viewTopBarSearch searchBarContent (WindowSize searchBarWidth searchBarHeight)
+        
     in row [ Background.color white
            , width fill
-           , height <| px topBarHeight
-           , paddingXY 30 0
+           , height <| px topBarSize.height
+           , paddingEach
+                 { left = percent 8 topBarSize.width
+                 , right = percent 2 topBarSize.width
+                 , bottom = 0
+                 , top = 0
+                 }
            , Font.color black
-           , spacing 20
+           , spacing (percent 30 topBarSize.height)
+           , Font.size (percent 43 topBarSize.height)
+           , Region.navigation
            ]
            [ searchBar shouldSearchBarShow
            , viewTopBarButton "/" "Home"
            , viewTopBarButton "/About" "About"
            ]
 
-viewTopBarSearch : Model -> Int -> Element Msg
-viewTopBarSearch model topBarHeight =
-    let size =
-            { width = 350
-            , height = topBarHeight - 15
-            }
-        fontSize = 20
+viewTopBarSearch : String -> WindowSize -> Element Msg
+viewTopBarSearch searchBarContent searchBarSize =
+    let fontSize = percent 60 searchBarSize.height
     in row
         [ Background.color black
-        , width <| px size.width
-        , height <| px size.height
-        , Border.rounded 30
+        , width <| px searchBarSize.width
+        , height <| px searchBarSize.height
+        , Border.rounded (percent 35 searchBarSize.height)
         , paddingEach
-            { top = 0, right = 15, bottom = 0, left = 5 }
-        , spacing 30
+            { top = 0
+            , right = percent 25 searchBarSize.height
+            , bottom = 0
+            , left = percent 20 searchBarSize.height
+            }
         ]
         [ Input.search
               [ Background.color black
@@ -450,22 +495,21 @@ viewTopBarSearch model topBarHeight =
               , Font.color white
               , noFocusShadow
               , Border.width 0
-              --, explain Debug.todo
-              , padding <| ( size.height - fontSize ) // 2
+              , padding <| ( searchBarSize.height - fontSize ) // 2
               , Font.size fontSize
-              , Border.rounded 20
+              , Border.rounded (percent 50 searchBarSize.height)
               , Events.onFocus SearchBarGetsFocus
               , Events.onLoseFocus SearchBarLosesFocus
               ]
               { onChange = SearchBarChanged
-              , text = model.searchBarContent
+              , text = searchBarContent
               , placeholder = Nothing
               , label = Input.labelHidden "Search input"
               }
         , el
             [ Background.uncropped "Images/blue_search_icon.png"
-            , height <| px (size.height - 15 )
-            , width <| px ( size.height - 15 )
+            , height <| px (percent 80 searchBarSize.height)
+            , width <| px (percent 80 searchBarSize.height)
             , alignRight
             ] <|
             Input.button
@@ -491,35 +535,118 @@ viewTopBarButton url label =
            , label = text label
            }
 
-viewFooter : Element Msg
-viewFooter =
+viewFooter : WindowSize -> Element Msg
+viewFooter footerSize =
     paragraph
         [ Font.center
         , Font.color white
-        , Font.size 12
-        , paddingXY 0 30
+        , Font.size footerSize.height
+        , paddingXY 0 (2 * footerSize.height)
         , alignBottom
+        , Region.footer
         ] <|
         [ text "Developed by Gergely Malinoczki" ]
 
 --VIEW RESULTS PAGE
 
-viewResultsPage : Model -> Element Msg
-viewResultsPage model =
+viewResultsPage : WindowSize -> Model -> Element Msg
+viewResultsPage resultsPageSize model =
     let currentPage =
             case getCurrentPage model.route of
                 Just pageNum -> pageNum
                 Nothing -> 0
+        
+        paddingCenter =
+            paddingEach
+               { top = percent 5 resultsPageSize.height
+               , bottom = 0, left = 0, right = 0
+               }
+        paddingLeft = 
+            paddingEach
+               { top = percent 5 resultsPageSize.height
+               , left = percent 10 resultsPageSize.width
+               , bottom = 0, right = 0
+               }
+                                                
+        resultsColumn : Width -> Orientation -> List Character -> Element Msg
+        resultsColumn resultsColwidth orientation charList =
+           column
+              [ 
+               spacing (percent 2 resultsPageSize.height)
+              , Region.mainContent
+              --, explain Debug.todo
+              ] <|
+                  let resultSize =
+                          { width = resultsColwidth
+                          , height = percent 35 resultsColwidth
+                          }
+                         
+                  in case orientation of
+                         Landscape ->
+                             List.map
+                                 ( viewCharacterResultHorizontal resultSize )
+                                 charList
+                         Portrait ->
+                             List.map
+                                 ( viewCharacterResultVertical resultSize.width )
+                                 charList
+              
+                                                                    
     in case model.searchResult of
            CharacterSearch charRequest ->
-               column
-                   [ centerX
-                   , padding 10
-                   , spacing 5
-                   ] <|
-                   List.map ( viewCharacterResult model.device ) charRequest.results
-                   ++ [ viewSearchPageNavigation
-                            currentPage charRequest.info model.device]
+               case model.device.orientation of
+                       Landscape ->
+                           case model.device.class of
+                               Phone ->
+                                   el
+                                     [ centerX
+                                     , paddingCenter
+                                     ] <|
+                                       resultsColumn
+                                          (percent 80 resultsPageSize.width)
+                                          Landscape
+                                          charRequest.results
+                               _ ->
+                                   row
+                                     [ alignLeft
+                                     , paddingLeft
+                                     ]
+                                     [ resultsColumn
+                                           (percent 35 resultsPageSize.width)
+                                           Landscape
+                                           charRequest.results
+                                     ]
+                       Portrait ->
+                           case model.device.class of
+                               Phone ->
+                                   el
+                                     [ centerX
+                                     , paddingCenter
+                                     ] <|
+                                       resultsColumn
+                                           ( percent 80 resultsPageSize.width )
+                                           Portrait
+                                           charRequest.results
+                               Tablet ->
+                                   el
+                                     [ centerX
+                                     , paddingCenter
+                                     ] <|
+                                       resultsColumn
+                                           ( percent 80 resultsPageSize.width )
+                                           Landscape
+                                           charRequest.results
+                               _ ->
+                                   row
+                                     [ alignLeft
+                                     , paddingLeft
+                                     ]
+                                     [ resultsColumn
+                                           ( percent 35 resultsPageSize.width )
+                                           Landscape
+                                           charRequest.results
+                                     ]
+               
            _ -> text "Something went wrong tetya"
         
 getCurrentPage : Route -> Maybe Int
@@ -528,110 +655,105 @@ getCurrentPage route =
         SearchResultsPage parameters -> parameters.page
         _ -> Nothing
                    
-viewCharacterResult : Device -> Character -> Element Msg
-viewCharacterResult device character =
+viewCharacterResultHorizontal : WindowSize  -> Character -> Element Msg
+viewCharacterResultHorizontal resultSize character =
+    let resultHeight = 0
+    in row
+        [ Background.color grey
+        , height <| px resultSize.height
+        , width <| px resultSize.width
+        , Border.rounded 20
+        , centerX
+        ] <| 
+        [ el
+          [ height <| px resultSize.height
+          , width <| px resultSize.height
+          , Border.roundEach
+                { topLeft = 20
+                , topRight = 0
+                , bottomLeft = 20
+                , bottomRight = 0
+                }
+          , Background.uncropped character.image
+          ]
+          none
+        ]
+        ++ [viewCharacterInfo
+                (setWindowWidthPx
+                     (resultSize.width - resultSize.height)
+                     resultSize
+                )
+                character]
+    
+viewCharacterResultVertical : Width -> Character -> Element Msg
+viewCharacterResultVertical resultWidth character =
+    column
+         [ Background.color grey
+         , width <| px resultWidth
+         , Border.rounded 20
+         , centerX
+         ] <|
+         [ el
+             [ height <| px resultWidth
+             , width <| px resultWidth
+             , Border.roundEach
+                 { topLeft = 20
+                 , topRight = 20
+                 , bottomLeft = 0
+                 , bottomRight = 0
+                 }
+             , Background.uncropped character.image
+             ]
+             none
+         ]
+         
+
+    
+viewCharacterInfo : WindowSize -> Character -> Element Msg
+viewCharacterInfo infoSize character =
     let viewSpecies species subType =
             case subType of
                 "" -> species
                 _ -> species ++ " - " ++ subType
-
-        textInfoPart =
-            [ column
-                  [ padding 10
-                  , spacing 15
-                  , alignTop
-                  ]
-                  [ paragraph []
-                        [ link
-                            [ Font.bold
-                            , mouseOver [ Font.color green ]
-                            ]
-                            { url = "character/" ++ ( String.fromInt character.id )
-                            , label = text character.name
-                            }
-                        ]
-                  , column
-                      [ spacing 5]
-                      [ paragraph
-                          [ Font.size 15
-                          , Font.color <| rgb255 211 211 211
-                          ] <|
-                          [ text "Status:" ]
-                      , paragraph
-                          [] <|
-                          [ text ( statusToString character.status ) ]
-                      ]
-                  , column
-                      [ spacing 5]
-                      [ paragraph
-                          [ Font.size 15
-                          , Font.color <| rgb255 211 211 211
-                          , width <| px 200
-                          ]
-                          [ text "Species:" ]
-                      , paragraph
-                          [
-                          ] <|
-                          [ text <| viewSpecies character.species character.subType ]
-                      ]
-                  ]
-            ]
-
-        horizontalLook textInfo =
-            row
-                   [ Background.color grey
-                   , height <| px 180
-                   , width <| px 500
-                   , Border.rounded 20
-                   , centerX
-                   ] <| 
-                   [ el
-                       [ height <| px 180
-                       , width <| px 180
-                       , Border.roundEach
-                           { topLeft = 20
-                           , topRight = 0
-                           , bottomLeft = 20
-                           , bottomRight = 0
-                           }
-                       , Background.uncropped character.image
-                       ]
-                       none
-                   ]
-                   ++ textInfo
-
-        verticalLook textInfo =
+        subInfo title value =
             column
-                  [ Background.color grey
-                  , width <| px 200
-                  , Border.rounded 20
-                  , centerX
-                  ] <|
-                  [ el
-                      [ height <| px 200
-                      , width <| px 200
-                      , Border.roundEach
-                          { topLeft = 20
-                          , topRight = 20
-                          , bottomLeft = 0
-                          , bottomRight = 0
-                          }
-                      , Background.uncropped character.image
-                      ]
-                      none
-                  ]
-                  ++ textInfo
-                      
-    in case device.class of
-           Phone ->
-               case device.orientation of
-                   Portrait ->
-                       verticalLook textInfoPart
-                   Landscape ->
-                       horizontalLook textInfoPart
-                           
-           _ ->
-                horizontalLook textInfoPart
+                   [ spacing (percent 2 infoSize.height) ]
+                   [ paragraph
+                         [ Font.size (percent 55 mainFontSize)
+                         , Font.color <| rgb255 211 211 211
+                         , Region.heading 2
+                         ] <|
+                         [ text title ]
+                   , paragraph
+                         [ Region.heading 3
+                         , Font.size (percent 70 mainFontSize)
+                         ] <|
+                         [ text value ]
+                   ]
+        mainFontSize = percent 15 infoSize.height
+    in column
+        [ padding (percent 5 infoSize.height)
+        , spacing (percent 10 infoSize.height)
+        , alignTop
+        ]
+        [ paragraph
+              [ width <| px (percent 90 infoSize.width)
+              ]
+              [ link
+                    [ Font.bold
+                    , Font.size mainFontSize
+                    , mouseOver [ Font.color green ]
+                    , Region.heading 1
+                    ]
+                    { url = "character/" ++ ( String.fromInt character.id )
+                    , label = text character.name
+                    }
+              ]
+        , subInfo "Status:" (statusToString character.status)
+        , subInfo "Species:" ( viewSpecies character.species character.subType )
+              
+        ]
+
 
 viewSearchPageNavigation : Int -> RequestInfo -> Device -> Element Msg
 viewSearchPageNavigation currentPageArg info device =
@@ -710,6 +832,7 @@ viewSearchPageNavigation currentPageArg info device =
                row
                   [ centerX
                   , spacing 15
+                  , Region.navigation
                   ] <|
                   [ prevButton ]
                   ++ showThesePageNums info.pages currentPageArg
@@ -723,69 +846,77 @@ type Navigate =
 
 -- VIEW HOME PAGE
              
-viewHomePage : Model -> Element Msg
-viewHomePage model =
+viewHomePage : WindowSize -> Device -> String -> Element Msg
+viewHomePage homePageSize device searchBarContent =
     column
         [ width fill
         , height fill
-        , spacing 50
-        , padding 70
+        , spacing (percent 5 homePageSize.width)
+        , padding (percent 5 homePageSize.width)
+        , Region.mainContent
         ]
-        [ viewHeader model
-        , viewSearchBar model
-        , viewSearchButton
+        [ let headerSize =
+               case device.class of
+                   Phone -> setWindowWidthPc 90 homePageSize
+                   Tablet -> setWindowWidthPc 75 homePageSize
+                   _ -> setWindowWidthPc 60 homePageSize
+          in viewHeader headerSize
+        , let searchBarWidth =
+                  case device.class of
+                      Phone -> percent 80 homePageSize.width
+                      Tablet -> percent 55 homePageSize.width
+                      _ -> percent 40 homePageSize.width
+            in viewSearchBar
+                ( homePageSize
+                    |> setWindowWidthPx searchBarWidth
+                    |> setWindowHeightPc 6
+                )
+                searchBarContent
+        , let searchButtonWidth =
+                  case device.class of
+                      Phone -> percent 30 homePageSize.width
+                      Tablet -> percent 20 homePageSize.width
+                      _ -> percent 15 homePageSize.width
+          in viewSearchButton
+              ( homePageSize
+                    |> setWindowWidthPx searchButtonWidth
+                    |> setWindowHeightPc 5
+              )
         ]
 
-viewHeader : Model -> Element Msg
-viewHeader model =
-    let size =
-         case model.device.class of
-            Phone -> { width = 400, height = 150 }
-            Tablet -> { width = 550, height = 185 }
-            Desktop -> { width = 700, height = 230 }
-            BigDesktop -> {width = 700, height = 230 }
-    in el
-         [ centerX
-         , height <| px size.height
-         , width <| maximum model.windowSize.width (px size.width)
-         , explain Debug.todo
-         , Background.uncropped "Images/header.jpeg"
-         ] <|
-         none
-        {- image
-             []
-             { src = "Images/search_icon.png"
+viewHeader :WindowSize -> Element Msg
+viewHeader headerSize =
+     el
+       [ centerX
+       , Region.heading 1
+       ] <|
+         image
+             [ width <| px headerSize.width
+             ]
+             { src = "Images/header.jpeg"
              , description = "Rick and Morty header"
-             }-}
+             }
 
 
-viewSearchBar : Model -> Element Msg
-viewSearchBar model =
-    let size =
-         case model.device.class of
-             Phone -> { width = 400, height = 40 }
-             Tablet -> { width = 500, height = 50 }
-             _ -> { width = 600, height = 50 }
-        yPad = 0
-        spacingVal = 15
-        fontSize = 25
+viewSearchBar : WindowSize -> String -> Element Msg
+viewSearchBar searchBarSize searchBarContent =
+    let fontSize = percent 60 searchBarSize.height
     in row
         [ centerX
         , Background.color white
-        , Border.rounded 30
-        , width <| maximum (model.windowSize.width - 20) (px size.width)
-        , height <| px size.height
-        , paddingEach { top = yPad
-                      , right = 30
-                      , bottom = yPad
-                      , left = 10
+        , Border.rounded (percent 50 searchBarSize.height)
+        , width <| px searchBarSize.width
+        , height <| px searchBarSize.height 
+        , paddingEach { top = 0
+                      , right = percent 50 searchBarSize.height
+                      , bottom = 0
+                      , left = percent 25 searchBarSize.height
                       }
-        , spacing spacingVal
         ]
         [ el
             [ Background.uncropped "Images/search_icon.png"
-            , width <| px ( size.height - 15 )
-            , height <| px ( size.height - 15 )
+            , width <| px (percent 80 searchBarSize.height)
+            , height <| px (percent 80 searchBarSize.height)
             ] none
         , Input.search
             [ Font.color black
@@ -793,52 +924,53 @@ viewSearchBar model =
             , noFocusShadow
             , width fill
             , height fill
-            , padding <| (size.height - fontSize) // 2
+            , padding <| (searchBarSize.height - fontSize) // 2
             , Border.width 0
             , Events.onFocus SearchBarGetsFocus
             , Events.onLoseFocus SearchBarLosesFocus
             , htmlAttribute (Html.Attributes.id "home-page-searchbar")
             ]
             { onChange = SearchBarChanged
-            , text = model.searchBarContent
+            , text = searchBarContent
             , placeholder = Nothing
             , label = Input.labelHidden "Search input"
             }
         ]
 
-viewSearchButton : Element Msg
-viewSearchButton =
-    Input.button
-        [ Border.rounded 20
-        , width <| px 150
-        , height <| px 40
-        , Background.color green
-        , centerX
-        , Font.center
-        , Font.size 20
-        , Font.color black
-        , Font.bold
-        , noFocusShadow
-        , Border.shadow
-            { offset = (2,2)
-            , size = 1
-            , blur = 0
-            , color = rgb255 0 150 150
-            }
-        , focused
-              [ moveRight 2
-              , moveDown 2
-              , Border.shadow
-                  { offset = (0,0)
-                  , size = 0
-                  , blur = 0
-                  , color = green
-                  }
-              ]
-        ]
-        { onPress = Just SearchButtonPressed
-        , label = text "Search"
-        }
+viewSearchButton : WindowSize -> Element Msg
+viewSearchButton searchButtonSize =
+    let offset = toFloat <| percent 6 searchButtonSize.height
+    in Input.button
+           [ Border.rounded (percent 50 searchButtonSize.height)
+           , width <| px searchButtonSize.width
+           , height <| px searchButtonSize.height
+           , Background.color green
+           , centerX
+           , Font.center
+           , Font.size (percent 50 searchButtonSize.height)
+           , Font.color black
+           , Font.bold
+           , noFocusShadow
+           , Border.shadow
+               { offset = (offset,offset)
+               , size = max 1 (offset / 2)
+               , blur = 0
+               , color = rgb255 0 150 150
+               }
+           , focused
+                 [ moveRight offset
+                 , moveDown offset
+                 , Border.shadow
+                     { offset = (0,0)
+                     , size = 0
+                     , blur = 0
+                     , color = green
+                     }
+                 ]
+           ]
+           { onPress = Just SearchButtonPressed
+           , label = text "Search"
+           }
 
 -- VIEW ABOUT PAGE
 
@@ -877,7 +1009,9 @@ green = rgb255 0 204 204
 grey : Color
 grey = rgb255 105 105 105
 
-
+percent : Float -> Int -> Int
+percent perc num =
+    round <| perc * (toFloat num) / 100
 
 
 statusToString : Status -> String

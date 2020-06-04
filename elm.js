@@ -10734,16 +10734,16 @@ var $elm$core$Basics$never = function (_v0) {
 	}
 };
 var $elm$browser$Browser$application = _Browser_application;
-var $author$project$Main$Flags = F2(
-	function (width, height) {
-		return {height: height, width: width};
-	});
 var $mdgriffith$elm_ui$Element$Landscape = {$: 'Landscape'};
 var $author$project$Main$NoSearchInitiated = {$: 'NoSearchInitiated'};
 var $mdgriffith$elm_ui$Element$Tablet = {$: 'Tablet'};
+var $author$project$Main$WindowSize = F2(
+	function (width, height) {
+		return {height: height, width: width};
+	});
 var $author$project$Main$decodeFlags = A3(
 	$elm$json$Json$Decode$map2,
-	$author$project$Main$Flags,
+	$author$project$Main$WindowSize,
 	A2($elm$json$Json$Decode$field, 'width', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'height', $elm$json$Json$Decode$int));
 var $author$project$Main$NoOp = {$: 'NoOp'};
@@ -11639,7 +11639,7 @@ var $author$project$Main$init = F3(
 			searchBarFocused: false,
 			searchResult: $author$project$Main$NoSearchInitiated,
 			url: url,
-			windowSize: A2($author$project$Main$Flags, 0, 0)
+			windowSize: A2($author$project$Main$WindowSize, 0, 0)
 		};
 		var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$decodeFlags, flags);
 		if (_v0.$ === 'Ok') {
@@ -11649,7 +11649,7 @@ var $author$project$Main$init = F3(
 					model,
 					{
 						device: A2($author$project$Main$windowToDevice, flagsDecoded.width, flagsDecoded.height),
-						windowSize: A2($author$project$Main$Flags, flagsDecoded.width, flagsDecoded.height)
+						windowSize: A2($author$project$Main$WindowSize, flagsDecoded.width, flagsDecoded.height)
 					}));
 			var initModel = _v1.a;
 			var initCmdMsg = _v1.b;
@@ -11991,7 +11991,7 @@ var $author$project$Main$update = F2(
 						model,
 						{
 							device: A2($author$project$Main$windowToDevice, width, height),
-							windowSize: A2($author$project$Main$Flags, width, height)
+							windowSize: A2($author$project$Main$WindowSize, width, height)
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'SearchBarChanged':
@@ -17745,6 +17745,25 @@ var $mdgriffith$elm_ui$Element$layoutWith = F3(
 	});
 var $mdgriffith$elm_ui$Element$layout = $mdgriffith$elm_ui$Element$layoutWith(
 	{options: _List_Nil});
+var $author$project$Main$percent = F2(
+	function (perc, num) {
+		return $elm$core$Basics$round((perc * num) / 100);
+	});
+var $author$project$Main$setWindowHeightPc = F2(
+	function (perc, window) {
+		var height = window.height;
+		return _Utils_update(
+			window,
+			{
+				height: A2($author$project$Main$percent, perc, height)
+			});
+	});
+var $author$project$Main$setWindowHeightPx = F2(
+	function (size, window) {
+		return _Utils_update(
+			window,
+			{height: size});
+	});
 var $mdgriffith$elm_ui$Internal$Model$Text = function (a) {
 	return {$: 'Text', a: a};
 };
@@ -17771,6 +17790,11 @@ var $mdgriffith$elm_ui$Internal$Model$Class = F2(
 	});
 var $mdgriffith$elm_ui$Internal$Flag$fontAlignment = $mdgriffith$elm_ui$Internal$Flag$flag(12);
 var $mdgriffith$elm_ui$Element$Font$center = A2($mdgriffith$elm_ui$Internal$Model$Class, $mdgriffith$elm_ui$Internal$Flag$fontAlignment, $mdgriffith$elm_ui$Internal$Style$classes.textCenter);
+var $mdgriffith$elm_ui$Internal$Model$ContentInfo = {$: 'ContentInfo'};
+var $mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
+	return {$: 'Describe', a: a};
+};
+var $mdgriffith$elm_ui$Element$Region$footer = $mdgriffith$elm_ui$Internal$Model$Describe($mdgriffith$elm_ui$Internal$Model$ContentInfo);
 var $mdgriffith$elm_ui$Internal$Model$PaddingStyle = F5(
 	function (a, b, c, d, e) {
 		return {$: 'PaddingStyle', a: a, b: b, c: c, d: d, e: e};
@@ -17798,9 +17822,6 @@ var $mdgriffith$elm_ui$Element$paddingXY = F2(
 				y,
 				x));
 	});
-var $mdgriffith$elm_ui$Internal$Model$Describe = function (a) {
-	return {$: 'Describe', a: a};
-};
 var $mdgriffith$elm_ui$Internal$Model$Paragraph = {$: 'Paragraph'};
 var $mdgriffith$elm_ui$Internal$Model$SpacingStyle = F3(
 	function (a, b, c) {
@@ -17846,20 +17867,25 @@ var $mdgriffith$elm_ui$Element$Font$size = function (i) {
 		$mdgriffith$elm_ui$Internal$Model$FontSize(i));
 };
 var $author$project$Main$white = A3($mdgriffith$elm_ui$Element$rgb255, 255, 255, 255);
-var $author$project$Main$viewFooter = A2(
-	$mdgriffith$elm_ui$Element$paragraph,
-	_List_fromArray(
-		[
-			$mdgriffith$elm_ui$Element$Font$center,
-			$mdgriffith$elm_ui$Element$Font$color($author$project$Main$white),
-			$mdgriffith$elm_ui$Element$Font$size(12),
-			A2($mdgriffith$elm_ui$Element$paddingXY, 0, 30),
-			$mdgriffith$elm_ui$Element$alignBottom
-		]),
-	_List_fromArray(
-		[
-			$mdgriffith$elm_ui$Element$text('Developed by Gergely Malinoczki')
-		]));
+var $author$project$Main$viewFooter = function (footerSize) {
+	return A2(
+		$mdgriffith$elm_ui$Element$paragraph,
+		_List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$Font$center,
+				$mdgriffith$elm_ui$Element$Font$color($author$project$Main$white),
+				$mdgriffith$elm_ui$Element$Font$size(footerSize.height),
+				A2($mdgriffith$elm_ui$Element$paddingXY, 0, 2 * footerSize.height),
+				$mdgriffith$elm_ui$Element$alignBottom,
+				$mdgriffith$elm_ui$Element$Region$footer
+			]),
+		_List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$text('Developed by Gergely Malinoczki')
+			]));
+};
+var $mdgriffith$elm_ui$Internal$Model$Main = {$: 'Main'};
+var $mdgriffith$elm_ui$Element$Region$mainContent = $mdgriffith$elm_ui$Internal$Model$Describe($mdgriffith$elm_ui$Internal$Model$Main);
 var $mdgriffith$elm_ui$Element$padding = function (x) {
 	return A2(
 		$mdgriffith$elm_ui$Internal$Model$StyleClass,
@@ -17872,6 +17898,21 @@ var $mdgriffith$elm_ui$Element$padding = function (x) {
 			x,
 			x));
 };
+var $author$project$Main$setWindowWidthPc = F2(
+	function (perc, window) {
+		var width = window.width;
+		return _Utils_update(
+			window,
+			{
+				width: A2($author$project$Main$percent, perc, width)
+			});
+	});
+var $author$project$Main$setWindowWidthPx = F2(
+	function (size, window) {
+		return _Utils_update(
+			window,
+			{width: size});
+	});
 var $mdgriffith$elm_ui$Internal$Model$AlignX = function (a) {
 	return {$: 'AlignX', a: a};
 };
@@ -17894,64 +17935,81 @@ var $mdgriffith$elm_ui$Element$el = F2(
 				_List_fromArray(
 					[child])));
 	});
-var $mdgriffith$elm_ui$Element$explain = function (_v0) {
-	return $mdgriffith$elm_ui$Internal$Model$htmlClass('explain');
+var $mdgriffith$elm_ui$Internal$Model$Heading = function (a) {
+	return {$: 'Heading', a: a};
 };
-var $mdgriffith$elm_ui$Internal$Model$Max = F2(
-	function (a, b) {
-		return {$: 'Max', a: a, b: b};
+var $mdgriffith$elm_ui$Element$Region$heading = A2($elm$core$Basics$composeL, $mdgriffith$elm_ui$Internal$Model$Describe, $mdgriffith$elm_ui$Internal$Model$Heading);
+var $elm$html$Html$Attributes$alt = $elm$html$Html$Attributes$stringProperty('alt');
+var $elm$html$Html$Attributes$src = function (url) {
+	return A2(
+		$elm$html$Html$Attributes$stringProperty,
+		'src',
+		_VirtualDom_noJavaScriptOrHtmlUri(url));
+};
+var $mdgriffith$elm_ui$Element$image = F2(
+	function (attrs, _v0) {
+		var src = _v0.src;
+		var description = _v0.description;
+		var imageAttributes = A2(
+			$elm$core$List$filter,
+			function (a) {
+				switch (a.$) {
+					case 'Width':
+						return true;
+					case 'Height':
+						return true;
+					default:
+						return false;
+				}
+			},
+			attrs);
+		return A4(
+			$mdgriffith$elm_ui$Internal$Model$element,
+			$mdgriffith$elm_ui$Internal$Model$asEl,
+			$mdgriffith$elm_ui$Internal$Model$div,
+			A2(
+				$elm$core$List$cons,
+				$mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.imageContainer),
+				attrs),
+			$mdgriffith$elm_ui$Internal$Model$Unkeyed(
+				_List_fromArray(
+					[
+						A4(
+						$mdgriffith$elm_ui$Internal$Model$element,
+						$mdgriffith$elm_ui$Internal$Model$asEl,
+						$mdgriffith$elm_ui$Internal$Model$NodeName('img'),
+						_Utils_ap(
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Internal$Model$Attr(
+									$elm$html$Html$Attributes$src(src)),
+									$mdgriffith$elm_ui$Internal$Model$Attr(
+									$elm$html$Html$Attributes$alt(description))
+								]),
+							imageAttributes),
+						$mdgriffith$elm_ui$Internal$Model$Unkeyed(_List_Nil))
+					])));
 	});
-var $mdgriffith$elm_ui$Element$maximum = F2(
-	function (i, l) {
-		return A2($mdgriffith$elm_ui$Internal$Model$Max, i, l);
-	});
-var $mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
-var $mdgriffith$elm_ui$Element$none = $mdgriffith$elm_ui$Internal$Model$Empty;
 var $mdgriffith$elm_ui$Internal$Model$Px = function (a) {
 	return {$: 'Px', a: a};
 };
 var $mdgriffith$elm_ui$Element$px = $mdgriffith$elm_ui$Internal$Model$Px;
-var $elm$core$Debug$todo = _Debug_todo;
-var $mdgriffith$elm_ui$Element$Background$uncropped = function (src) {
-	return $mdgriffith$elm_ui$Internal$Model$Attr(
-		A2($elm$virtual_dom$VirtualDom$style, 'background', 'url(\"' + (src + '\") center / contain no-repeat')));
-};
-var $author$project$Main$viewHeader = function (model) {
-	var size = function () {
-		var _v0 = model.device._class;
-		switch (_v0.$) {
-			case 'Phone':
-				return {height: 150, width: 400};
-			case 'Tablet':
-				return {height: 185, width: 550};
-			case 'Desktop':
-				return {height: 230, width: 700};
-			default:
-				return {height: 230, width: 700};
-		}
-	}();
+var $author$project$Main$viewHeader = function (headerSize) {
 	return A2(
 		$mdgriffith$elm_ui$Element$el,
 		_List_fromArray(
 			[
 				$mdgriffith$elm_ui$Element$centerX,
-				$mdgriffith$elm_ui$Element$height(
-				$mdgriffith$elm_ui$Element$px(size.height)),
-				$mdgriffith$elm_ui$Element$width(
-				A2(
-					$mdgriffith$elm_ui$Element$maximum,
-					model.windowSize.width,
-					$mdgriffith$elm_ui$Element$px(size.width))),
-				$mdgriffith$elm_ui$Element$explain(
-				_Debug_todo(
-					'Main',
-					{
-						start: {line: 751, column: 20},
-						end: {line: 751, column: 30}
-					})),
-				$mdgriffith$elm_ui$Element$Background$uncropped('Images/header.jpeg')
+				$mdgriffith$elm_ui$Element$Region$heading(1)
 			]),
-		$mdgriffith$elm_ui$Element$none);
+		A2(
+			$mdgriffith$elm_ui$Element$image,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$width(
+					$mdgriffith$elm_ui$Element$px(headerSize.width))
+				]),
+			{description: 'Rick and Morty header', src: 'Images/header.jpeg'}));
 };
 var $author$project$Main$SearchBarChanged = function (a) {
 	return {$: 'SearchBarChanged', a: a};
@@ -17978,6 +18036,7 @@ var $mdgriffith$elm_ui$Internal$Model$TransformComponent = F2(
 	function (a, b) {
 		return {$: 'TransformComponent', a: a, b: b};
 	});
+var $mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
 var $mdgriffith$elm_ui$Internal$Model$map = F2(
 	function (fn, el) {
 		switch (el.$) {
@@ -18135,6 +18194,7 @@ var $author$project$Main$noFocusShadow = $mdgriffith$elm_ui$Element$focused(
 				size: 0
 			})
 		]));
+var $mdgriffith$elm_ui$Element$none = $mdgriffith$elm_ui$Internal$Model$Empty;
 var $elm$html$Html$Events$onFocus = function (msg) {
 	return A2(
 		$elm$html$Html$Events$on,
@@ -19035,76 +19095,72 @@ var $mdgriffith$elm_ui$Element$Input$search = $mdgriffith$elm_ui$Element$Input$t
 		spellchecked: false,
 		type_: $mdgriffith$elm_ui$Element$Input$TextInputNode('search')
 	});
-var $author$project$Main$viewSearchBar = function (model) {
-	var yPad = 0;
-	var spacingVal = 15;
-	var size = function () {
-		var _v0 = model.device._class;
-		switch (_v0.$) {
-			case 'Phone':
-				return {height: 40, width: 400};
-			case 'Tablet':
-				return {height: 50, width: 500};
-			default:
-				return {height: 50, width: 600};
-		}
-	}();
-	var fontSize = 25;
-	return A2(
-		$mdgriffith$elm_ui$Element$row,
-		_List_fromArray(
-			[
-				$mdgriffith$elm_ui$Element$centerX,
-				$mdgriffith$elm_ui$Element$Background$color($author$project$Main$white),
-				$mdgriffith$elm_ui$Element$Border$rounded(30),
-				$mdgriffith$elm_ui$Element$width(
-				A2(
-					$mdgriffith$elm_ui$Element$maximum,
-					model.windowSize.width - 20,
-					$mdgriffith$elm_ui$Element$px(size.width))),
-				$mdgriffith$elm_ui$Element$height(
-				$mdgriffith$elm_ui$Element$px(size.height)),
-				$mdgriffith$elm_ui$Element$paddingEach(
-				{bottom: yPad, left: 10, right: 30, top: yPad}),
-				$mdgriffith$elm_ui$Element$spacing(spacingVal)
-			]),
-		_List_fromArray(
-			[
-				A2(
-				$mdgriffith$elm_ui$Element$el,
-				_List_fromArray(
-					[
-						$mdgriffith$elm_ui$Element$Background$uncropped('Images/search_icon.png'),
-						$mdgriffith$elm_ui$Element$width(
-						$mdgriffith$elm_ui$Element$px(size.height - 15)),
-						$mdgriffith$elm_ui$Element$height(
-						$mdgriffith$elm_ui$Element$px(size.height - 15))
-					]),
-				$mdgriffith$elm_ui$Element$none),
-				A2(
-				$mdgriffith$elm_ui$Element$Input$search,
-				_List_fromArray(
-					[
-						$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
-						$mdgriffith$elm_ui$Element$Font$size(fontSize),
-						$author$project$Main$noFocusShadow,
-						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-						$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
-						$mdgriffith$elm_ui$Element$padding(((size.height - fontSize) / 2) | 0),
-						$mdgriffith$elm_ui$Element$Border$width(0),
-						$mdgriffith$elm_ui$Element$Events$onFocus($author$project$Main$SearchBarGetsFocus),
-						$mdgriffith$elm_ui$Element$Events$onLoseFocus($author$project$Main$SearchBarLosesFocus),
-						$mdgriffith$elm_ui$Element$htmlAttribute(
-						$elm$html$Html$Attributes$id('home-page-searchbar'))
-					]),
-				{
-					label: $mdgriffith$elm_ui$Element$Input$labelHidden('Search input'),
-					onChange: $author$project$Main$SearchBarChanged,
-					placeholder: $elm$core$Maybe$Nothing,
-					text: model.searchBarContent
-				})
-			]));
+var $mdgriffith$elm_ui$Element$Background$uncropped = function (src) {
+	return $mdgriffith$elm_ui$Internal$Model$Attr(
+		A2($elm$virtual_dom$VirtualDom$style, 'background', 'url(\"' + (src + '\") center / contain no-repeat')));
 };
+var $author$project$Main$viewSearchBar = F2(
+	function (searchBarSize, searchBarContent) {
+		var fontSize = A2($author$project$Main$percent, 60, searchBarSize.height);
+		return A2(
+			$mdgriffith$elm_ui$Element$row,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$centerX,
+					$mdgriffith$elm_ui$Element$Background$color($author$project$Main$white),
+					$mdgriffith$elm_ui$Element$Border$rounded(
+					A2($author$project$Main$percent, 50, searchBarSize.height)),
+					$mdgriffith$elm_ui$Element$width(
+					$mdgriffith$elm_ui$Element$px(searchBarSize.width)),
+					$mdgriffith$elm_ui$Element$height(
+					$mdgriffith$elm_ui$Element$px(searchBarSize.height)),
+					$mdgriffith$elm_ui$Element$paddingEach(
+					{
+						bottom: 0,
+						left: A2($author$project$Main$percent, 25, searchBarSize.height),
+						right: A2($author$project$Main$percent, 50, searchBarSize.height),
+						top: 0
+					})
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$mdgriffith$elm_ui$Element$el,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$Background$uncropped('Images/search_icon.png'),
+							$mdgriffith$elm_ui$Element$width(
+							$mdgriffith$elm_ui$Element$px(
+								A2($author$project$Main$percent, 80, searchBarSize.height))),
+							$mdgriffith$elm_ui$Element$height(
+							$mdgriffith$elm_ui$Element$px(
+								A2($author$project$Main$percent, 80, searchBarSize.height)))
+						]),
+					$mdgriffith$elm_ui$Element$none),
+					A2(
+					$mdgriffith$elm_ui$Element$Input$search,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
+							$mdgriffith$elm_ui$Element$Font$size(fontSize),
+							$author$project$Main$noFocusShadow,
+							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+							$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
+							$mdgriffith$elm_ui$Element$padding(((searchBarSize.height - fontSize) / 2) | 0),
+							$mdgriffith$elm_ui$Element$Border$width(0),
+							$mdgriffith$elm_ui$Element$Events$onFocus($author$project$Main$SearchBarGetsFocus),
+							$mdgriffith$elm_ui$Element$Events$onLoseFocus($author$project$Main$SearchBarLosesFocus),
+							$mdgriffith$elm_ui$Element$htmlAttribute(
+							$elm$html$Html$Attributes$id('home-page-searchbar'))
+						]),
+					{
+						label: $mdgriffith$elm_ui$Element$Input$labelHidden('Search input'),
+						onChange: $author$project$Main$SearchBarChanged,
+						placeholder: $elm$core$Maybe$Nothing,
+						text: searchBarContent
+					})
+				]));
+	});
 var $author$project$Main$SearchButtonPressed = {$: 'SearchButtonPressed'};
 var $mdgriffith$elm_ui$Internal$Flag$fontWeight = $mdgriffith$elm_ui$Internal$Flag$flag(13);
 var $mdgriffith$elm_ui$Element$Font$bold = A2($mdgriffith$elm_ui$Internal$Model$Class, $mdgriffith$elm_ui$Internal$Flag$fontWeight, $mdgriffith$elm_ui$Internal$Style$classes.bold);
@@ -19226,64 +19282,124 @@ var $mdgriffith$elm_ui$Element$moveRight = function (x) {
 		$mdgriffith$elm_ui$Internal$Flag$moveX,
 		$mdgriffith$elm_ui$Internal$Model$MoveX(x));
 };
-var $author$project$Main$viewSearchButton = A2(
-	$mdgriffith$elm_ui$Element$Input$button,
-	_List_fromArray(
-		[
-			$mdgriffith$elm_ui$Element$Border$rounded(20),
-			$mdgriffith$elm_ui$Element$width(
-			$mdgriffith$elm_ui$Element$px(150)),
-			$mdgriffith$elm_ui$Element$height(
-			$mdgriffith$elm_ui$Element$px(40)),
-			$mdgriffith$elm_ui$Element$Background$color($author$project$Main$green),
-			$mdgriffith$elm_ui$Element$centerX,
-			$mdgriffith$elm_ui$Element$Font$center,
-			$mdgriffith$elm_ui$Element$Font$size(20),
-			$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
-			$mdgriffith$elm_ui$Element$Font$bold,
-			$author$project$Main$noFocusShadow,
-			$mdgriffith$elm_ui$Element$Border$shadow(
-			{
-				blur: 0,
-				color: A3($mdgriffith$elm_ui$Element$rgb255, 0, 150, 150),
-				offset: _Utils_Tuple2(2, 2),
-				size: 1
-			}),
-			$mdgriffith$elm_ui$Element$focused(
+var $author$project$Main$viewSearchButton = function (searchButtonSize) {
+	var offset = A2($author$project$Main$percent, 6, searchButtonSize.height);
+	return A2(
+		$mdgriffith$elm_ui$Element$Input$button,
+		_List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$Border$rounded(
+				A2($author$project$Main$percent, 50, searchButtonSize.height)),
+				$mdgriffith$elm_ui$Element$width(
+				$mdgriffith$elm_ui$Element$px(searchButtonSize.width)),
+				$mdgriffith$elm_ui$Element$height(
+				$mdgriffith$elm_ui$Element$px(searchButtonSize.height)),
+				$mdgriffith$elm_ui$Element$Background$color($author$project$Main$green),
+				$mdgriffith$elm_ui$Element$centerX,
+				$mdgriffith$elm_ui$Element$Font$center,
+				$mdgriffith$elm_ui$Element$Font$size(
+				A2($author$project$Main$percent, 50, searchButtonSize.height)),
+				$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
+				$mdgriffith$elm_ui$Element$Font$bold,
+				$author$project$Main$noFocusShadow,
+				$mdgriffith$elm_ui$Element$Border$shadow(
+				{
+					blur: 0,
+					color: A3($mdgriffith$elm_ui$Element$rgb255, 0, 150, 150),
+					offset: _Utils_Tuple2(offset, offset),
+					size: A2($elm$core$Basics$max, 1, offset / 2)
+				}),
+				$mdgriffith$elm_ui$Element$focused(
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$moveRight(offset),
+						$mdgriffith$elm_ui$Element$moveDown(offset),
+						$mdgriffith$elm_ui$Element$Border$shadow(
+						{
+							blur: 0,
+							color: $author$project$Main$green,
+							offset: _Utils_Tuple2(0, 0),
+							size: 0
+						})
+					]))
+			]),
+		{
+			label: $mdgriffith$elm_ui$Element$text('Search'),
+			onPress: $elm$core$Maybe$Just($author$project$Main$SearchButtonPressed)
+		});
+};
+var $author$project$Main$viewHomePage = F3(
+	function (homePageSize, device, searchBarContent) {
+		return A2(
+			$mdgriffith$elm_ui$Element$column,
 			_List_fromArray(
 				[
-					$mdgriffith$elm_ui$Element$moveRight(2),
-					$mdgriffith$elm_ui$Element$moveDown(2),
-					$mdgriffith$elm_ui$Element$Border$shadow(
-					{
-						blur: 0,
-						color: $author$project$Main$green,
-						offset: _Utils_Tuple2(0, 0),
-						size: 0
-					})
-				]))
-		]),
-	{
-		label: $mdgriffith$elm_ui$Element$text('Search'),
-		onPress: $elm$core$Maybe$Just($author$project$Main$SearchButtonPressed)
+					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+					$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
+					$mdgriffith$elm_ui$Element$spacing(
+					A2($author$project$Main$percent, 5, homePageSize.width)),
+					$mdgriffith$elm_ui$Element$padding(
+					A2($author$project$Main$percent, 5, homePageSize.width)),
+					$mdgriffith$elm_ui$Element$Region$mainContent
+				]),
+			_List_fromArray(
+				[
+					function () {
+					var headerSize = function () {
+						var _v0 = device._class;
+						switch (_v0.$) {
+							case 'Phone':
+								return A2($author$project$Main$setWindowWidthPc, 90, homePageSize);
+							case 'Tablet':
+								return A2($author$project$Main$setWindowWidthPc, 75, homePageSize);
+							default:
+								return A2($author$project$Main$setWindowWidthPc, 60, homePageSize);
+						}
+					}();
+					return $author$project$Main$viewHeader(headerSize);
+				}(),
+					function () {
+					var searchBarWidth = function () {
+						var _v1 = device._class;
+						switch (_v1.$) {
+							case 'Phone':
+								return A2($author$project$Main$percent, 80, homePageSize.width);
+							case 'Tablet':
+								return A2($author$project$Main$percent, 55, homePageSize.width);
+							default:
+								return A2($author$project$Main$percent, 40, homePageSize.width);
+						}
+					}();
+					return A2(
+						$author$project$Main$viewSearchBar,
+						A2(
+							$author$project$Main$setWindowHeightPc,
+							6,
+							A2($author$project$Main$setWindowWidthPx, searchBarWidth, homePageSize)),
+						searchBarContent);
+				}(),
+					function () {
+					var searchButtonWidth = function () {
+						var _v2 = device._class;
+						switch (_v2.$) {
+							case 'Phone':
+								return A2($author$project$Main$percent, 30, homePageSize.width);
+							case 'Tablet':
+								return A2($author$project$Main$percent, 20, homePageSize.width);
+							default:
+								return A2($author$project$Main$percent, 15, homePageSize.width);
+						}
+					}();
+					return $author$project$Main$viewSearchButton(
+						A2(
+							$author$project$Main$setWindowHeightPc,
+							5,
+							A2($author$project$Main$setWindowWidthPx, searchButtonWidth, homePageSize)));
+				}()
+				]));
 	});
-var $author$project$Main$viewHomePage = function (model) {
-	return A2(
-		$mdgriffith$elm_ui$Element$column,
-		_List_fromArray(
-			[
-				$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-				$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
-				$mdgriffith$elm_ui$Element$spacing(50),
-				$mdgriffith$elm_ui$Element$padding(70)
-			]),
-		_List_fromArray(
-			[
-				$author$project$Main$viewHeader(model),
-				$author$project$Main$viewSearchBar(model),
-				$author$project$Main$viewSearchButton
-			]));
-};
+var $mdgriffith$elm_ui$Internal$Model$Left = {$: 'Left'};
+var $mdgriffith$elm_ui$Element$alignLeft = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Left);
 var $author$project$Main$getCurrentPage = function (route) {
 	if (route.$ === 'SearchResultsPage') {
 		var parameters = route.a;
@@ -19292,9 +19408,23 @@ var $author$project$Main$getCurrentPage = function (route) {
 		return $elm$core$Maybe$Nothing;
 	}
 };
+var $author$project$Main$grey = A3($mdgriffith$elm_ui$Element$rgb255, 105, 105, 105);
+var $mdgriffith$elm_ui$Element$Border$roundEach = function (_v0) {
+	var topLeft = _v0.topLeft;
+	var topRight = _v0.topRight;
+	var bottomLeft = _v0.bottomLeft;
+	var bottomRight = _v0.bottomRight;
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$borderRound,
+		A3(
+			$mdgriffith$elm_ui$Internal$Model$Single,
+			'br-' + ($elm$core$String$fromInt(topLeft) + ('-' + ($elm$core$String$fromInt(topRight) + ($elm$core$String$fromInt(bottomLeft) + ('-' + $elm$core$String$fromInt(bottomRight)))))),
+			'border-radius',
+			$elm$core$String$fromInt(topLeft) + ('px ' + ($elm$core$String$fromInt(topRight) + ('px ' + ($elm$core$String$fromInt(bottomRight) + ('px ' + ($elm$core$String$fromInt(bottomLeft) + 'px'))))))));
+};
 var $mdgriffith$elm_ui$Internal$Model$Top = {$: 'Top'};
 var $mdgriffith$elm_ui$Element$alignTop = $mdgriffith$elm_ui$Internal$Model$AlignY($mdgriffith$elm_ui$Internal$Model$Top);
-var $author$project$Main$grey = A3($mdgriffith$elm_ui$Element$rgb255, 105, 105, 105);
 var $elm$html$Html$Attributes$rel = _VirtualDom_attribute('rel');
 var $mdgriffith$elm_ui$Element$link = F2(
 	function (attrs, _v0) {
@@ -19337,20 +19467,6 @@ var $mdgriffith$elm_ui$Element$mouseOver = function (decs) {
 			$mdgriffith$elm_ui$Internal$Model$Hover,
 			$mdgriffith$elm_ui$Internal$Model$unwrapDecorations(decs)));
 };
-var $mdgriffith$elm_ui$Element$Border$roundEach = function (_v0) {
-	var topLeft = _v0.topLeft;
-	var topRight = _v0.topRight;
-	var bottomLeft = _v0.bottomLeft;
-	var bottomRight = _v0.bottomRight;
-	return A2(
-		$mdgriffith$elm_ui$Internal$Model$StyleClass,
-		$mdgriffith$elm_ui$Internal$Flag$borderRound,
-		A3(
-			$mdgriffith$elm_ui$Internal$Model$Single,
-			'br-' + ($elm$core$String$fromInt(topLeft) + ('-' + ($elm$core$String$fromInt(topRight) + ($elm$core$String$fromInt(bottomLeft) + ('-' + $elm$core$String$fromInt(bottomRight)))))),
-			'border-radius',
-			$elm$core$String$fromInt(topLeft) + ('px ' + ($elm$core$String$fromInt(topRight) + ('px ' + ($elm$core$String$fromInt(bottomRight) + ('px ' + ($elm$core$String$fromInt(bottomLeft) + 'px'))))))));
-};
 var $author$project$Main$statusToString = function (status) {
 	switch (status.$) {
 		case 'Alive':
@@ -19363,8 +19479,8 @@ var $author$project$Main$statusToString = function (status) {
 			return 'Invalid status';
 	}
 };
-var $author$project$Main$viewCharacterResult = F2(
-	function (device, character) {
+var $author$project$Main$viewCharacterInfo = F2(
+	function (infoSize, character) {
 		var viewSpecies = F2(
 			function (species, subType) {
 				if (subType === '') {
@@ -19373,346 +19489,292 @@ var $author$project$Main$viewCharacterResult = F2(
 					return species + (' - ' + subType);
 				}
 			});
-		var verticalLook = function (textInfo) {
-			return A2(
-				$mdgriffith$elm_ui$Element$column,
-				_List_fromArray(
-					[
-						$mdgriffith$elm_ui$Element$Background$color($author$project$Main$grey),
-						$mdgriffith$elm_ui$Element$width(
-						$mdgriffith$elm_ui$Element$px(200)),
-						$mdgriffith$elm_ui$Element$Border$rounded(20),
-						$mdgriffith$elm_ui$Element$centerX
-					]),
-				_Utils_ap(
+		var mainFontSize = A2($author$project$Main$percent, 15, infoSize.height);
+		var subInfo = F2(
+			function (title, value) {
+				return A2(
+					$mdgriffith$elm_ui$Element$column,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$spacing(
+							A2($author$project$Main$percent, 2, infoSize.height))
+						]),
 					_List_fromArray(
 						[
 							A2(
-							$mdgriffith$elm_ui$Element$el,
+							$mdgriffith$elm_ui$Element$paragraph,
 							_List_fromArray(
 								[
-									$mdgriffith$elm_ui$Element$height(
-									$mdgriffith$elm_ui$Element$px(200)),
-									$mdgriffith$elm_ui$Element$width(
-									$mdgriffith$elm_ui$Element$px(200)),
-									$mdgriffith$elm_ui$Element$Border$roundEach(
-									{bottomLeft: 0, bottomRight: 0, topLeft: 20, topRight: 20}),
-									$mdgriffith$elm_ui$Element$Background$uncropped(character.image)
+									$mdgriffith$elm_ui$Element$Font$size(
+									A2($author$project$Main$percent, 55, mainFontSize)),
+									$mdgriffith$elm_ui$Element$Font$color(
+									A3($mdgriffith$elm_ui$Element$rgb255, 211, 211, 211)),
+									$mdgriffith$elm_ui$Element$Region$heading(2)
 								]),
-							$mdgriffith$elm_ui$Element$none)
-						]),
-					textInfo));
-		};
-		var textInfoPart = _List_fromArray(
-			[
-				A2(
-				$mdgriffith$elm_ui$Element$column,
-				_List_fromArray(
-					[
-						$mdgriffith$elm_ui$Element$padding(10),
-						$mdgriffith$elm_ui$Element$spacing(15),
-						$mdgriffith$elm_ui$Element$alignTop
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$mdgriffith$elm_ui$Element$paragraph,
-						_List_Nil,
-						_List_fromArray(
-							[
-								A2(
-								$mdgriffith$elm_ui$Element$link,
-								_List_fromArray(
-									[
-										$mdgriffith$elm_ui$Element$Font$bold,
-										$mdgriffith$elm_ui$Element$mouseOver(
-										_List_fromArray(
-											[
-												$mdgriffith$elm_ui$Element$Font$color($author$project$Main$green)
-											]))
-									]),
-								{
-									label: $mdgriffith$elm_ui$Element$text(character.name),
-									url: 'character/' + $elm$core$String$fromInt(character.id)
-								})
-							])),
-						A2(
-						$mdgriffith$elm_ui$Element$column,
-						_List_fromArray(
-							[
-								$mdgriffith$elm_ui$Element$spacing(5)
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$mdgriffith$elm_ui$Element$paragraph,
-								_List_fromArray(
-									[
-										$mdgriffith$elm_ui$Element$Font$size(15),
-										$mdgriffith$elm_ui$Element$Font$color(
-										A3($mdgriffith$elm_ui$Element$rgb255, 211, 211, 211))
-									]),
-								_List_fromArray(
-									[
-										$mdgriffith$elm_ui$Element$text('Status:')
-									])),
-								A2(
-								$mdgriffith$elm_ui$Element$paragraph,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$mdgriffith$elm_ui$Element$text(
-										$author$project$Main$statusToString(character.status))
-									]))
-							])),
-						A2(
-						$mdgriffith$elm_ui$Element$column,
-						_List_fromArray(
-							[
-								$mdgriffith$elm_ui$Element$spacing(5)
-							]),
-						_List_fromArray(
-							[
-								A2(
-								$mdgriffith$elm_ui$Element$paragraph,
-								_List_fromArray(
-									[
-										$mdgriffith$elm_ui$Element$Font$size(15),
-										$mdgriffith$elm_ui$Element$Font$color(
-										A3($mdgriffith$elm_ui$Element$rgb255, 211, 211, 211)),
-										$mdgriffith$elm_ui$Element$width(
-										$mdgriffith$elm_ui$Element$px(200))
-									]),
-								_List_fromArray(
-									[
-										$mdgriffith$elm_ui$Element$text('Species:')
-									])),
-								A2(
-								$mdgriffith$elm_ui$Element$paragraph,
-								_List_Nil,
-								_List_fromArray(
-									[
-										$mdgriffith$elm_ui$Element$text(
-										A2(viewSpecies, character.species, character.subType))
-									]))
-							]))
-					]))
-			]);
-		var horizontalLook = function (textInfo) {
-			return A2(
-				$mdgriffith$elm_ui$Element$row,
-				_List_fromArray(
-					[
-						$mdgriffith$elm_ui$Element$Background$color($author$project$Main$grey),
-						$mdgriffith$elm_ui$Element$height(
-						$mdgriffith$elm_ui$Element$px(180)),
-						$mdgriffith$elm_ui$Element$width(
-						$mdgriffith$elm_ui$Element$px(500)),
-						$mdgriffith$elm_ui$Element$Border$rounded(20),
-						$mdgriffith$elm_ui$Element$centerX
-					]),
-				_Utils_ap(
-					_List_fromArray(
-						[
-							A2(
-							$mdgriffith$elm_ui$Element$el,
 							_List_fromArray(
 								[
-									$mdgriffith$elm_ui$Element$height(
-									$mdgriffith$elm_ui$Element$px(180)),
-									$mdgriffith$elm_ui$Element$width(
-									$mdgriffith$elm_ui$Element$px(180)),
-									$mdgriffith$elm_ui$Element$Border$roundEach(
-									{bottomLeft: 20, bottomRight: 0, topLeft: 20, topRight: 0}),
-									$mdgriffith$elm_ui$Element$Background$uncropped(character.image)
+									$mdgriffith$elm_ui$Element$text(title)
+								])),
+							A2(
+							$mdgriffith$elm_ui$Element$paragraph,
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Element$Region$heading(3),
+									$mdgriffith$elm_ui$Element$Font$size(
+									A2($author$project$Main$percent, 70, mainFontSize))
 								]),
-							$mdgriffith$elm_ui$Element$none)
-						]),
-					textInfo));
-		};
-		var _v0 = device._class;
-		if (_v0.$ === 'Phone') {
-			var _v1 = device.orientation;
-			if (_v1.$ === 'Portrait') {
-				return verticalLook(textInfoPart);
-			} else {
-				return horizontalLook(textInfoPart);
-			}
-		} else {
-			return horizontalLook(textInfoPart);
-		}
-	});
-var $author$project$Main$GoToResultsPage = function (a) {
-	return {$: 'GoToResultsPage', a: a};
-};
-var $author$project$Main$Next = {$: 'Next'};
-var $author$project$Main$PageNum = function (a) {
-	return {$: 'PageNum', a: a};
-};
-var $author$project$Main$Prev = {$: 'Prev'};
-var $mdgriffith$elm_ui$Element$Font$underline = $mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.underline);
-var $author$project$Main$viewSearchPageNavigation = F3(
-	function (currentPageArg, info, device) {
-		var prevNextAttribute = _List_fromArray(
-			[
-				$mdgriffith$elm_ui$Element$Background$color($author$project$Main$green),
-				$mdgriffith$elm_ui$Element$Border$rounded(10),
-				$mdgriffith$elm_ui$Element$height(
-				$mdgriffith$elm_ui$Element$px(30)),
-				$mdgriffith$elm_ui$Element$width(
-				$mdgriffith$elm_ui$Element$px(60)),
-				$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
-				$mdgriffith$elm_ui$Element$Font$center,
-				$mdgriffith$elm_ui$Element$Font$underline,
-				$author$project$Main$noFocusShadow
-			]);
-		var prevButton = function () {
-			var _v4 = info.prev;
-			if (_v4.$ === 'Nothing') {
-				return $mdgriffith$elm_ui$Element$none;
-			} else {
-				return A2(
-					$mdgriffith$elm_ui$Element$Input$button,
-					prevNextAttribute,
-					{
-						label: $mdgriffith$elm_ui$Element$text('Prev'),
-						onPress: $elm$core$Maybe$Just(
-							$author$project$Main$GoToResultsPage($author$project$Main$Prev))
-					});
-			}
-		}();
-		var pageNumberButton = function (num) {
-			return A2(
-				$mdgriffith$elm_ui$Element$Input$button,
-				_List_fromArray(
-					[
-						$mdgriffith$elm_ui$Element$Background$color($author$project$Main$green),
-						$mdgriffith$elm_ui$Element$Border$rounded(10),
-						$mdgriffith$elm_ui$Element$height(
-						$mdgriffith$elm_ui$Element$px(30)),
-						$mdgriffith$elm_ui$Element$padding(5),
-						$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
-						$mdgriffith$elm_ui$Element$Font$center,
-						$author$project$Main$noFocusShadow
-					]),
-				{
-					label: $mdgriffith$elm_ui$Element$text(
-						$elm$core$String$fromInt(num)),
-					onPress: $elm$core$Maybe$Just(
-						$author$project$Main$GoToResultsPage(
-							$author$project$Main$PageNum(num)))
-				});
-		};
-		var nextButton = function () {
-			var _v3 = info.next;
-			if (_v3.$ === 'Nothing') {
-				return $mdgriffith$elm_ui$Element$none;
-			} else {
-				return A2(
-					$mdgriffith$elm_ui$Element$Input$button,
-					prevNextAttribute,
-					{
-						label: $mdgriffith$elm_ui$Element$text('Next'),
-						onPress: $elm$core$Maybe$Just(
-							$author$project$Main$GoToResultsPage($author$project$Main$Next))
-					});
-			}
-		}();
-		var currentPageRadius = function () {
-			var _v1 = device._class;
-			if (_v1.$ === 'Phone') {
-				var _v2 = device.orientation;
-				if (_v2.$ === 'Portrait') {
-					return 1;
-				} else {
-					return 2;
-				}
-			} else {
-				return 3;
-			}
-		}();
-		var showThesePageNums = F2(
-			function (pages, currentPage) {
-				if (pages <= 5) {
-					return A2(
-						$elm$core$List$map,
-						pageNumberButton,
-						A2($elm$core$List$range, 1, pages));
-				} else {
-					var upperBound = A2($elm$core$Basics$min, pages, currentPage + currentPageRadius);
-					var lowerBound = A2($elm$core$Basics$max, 1, currentPage - currentPageRadius);
-					return _Utils_ap(
-						_List_fromArray(
-							[
-								(lowerBound > 1) ? $mdgriffith$elm_ui$Element$text('...') : $mdgriffith$elm_ui$Element$none
-							]),
-						_Utils_ap(
-							A2(
-								$elm$core$List$map,
-								pageNumberButton,
-								A2($elm$core$List$range, lowerBound, upperBound)),
 							_List_fromArray(
 								[
-									(_Utils_cmp(upperBound, pages) < 0) ? $mdgriffith$elm_ui$Element$text('...') : $mdgriffith$elm_ui$Element$none
-								])));
-				}
+									$mdgriffith$elm_ui$Element$text(value)
+								]))
+						]));
 			});
-		var _v0 = info.pages;
-		if (_v0 === 1) {
-			return $mdgriffith$elm_ui$Element$none;
-		} else {
-			return A2(
-				$mdgriffith$elm_ui$Element$row,
-				_List_fromArray(
-					[
-						$mdgriffith$elm_ui$Element$centerX,
-						$mdgriffith$elm_ui$Element$spacing(15)
-					]),
-				_Utils_ap(
-					_List_fromArray(
-						[prevButton]),
-					_Utils_ap(
-						A2(showThesePageNums, info.pages, currentPageArg),
-						_List_fromArray(
-							[nextButton]))));
-		}
-	});
-var $author$project$Main$viewResultsPage = function (model) {
-	var currentPage = function () {
-		var _v1 = $author$project$Main$getCurrentPage(model.route);
-		if (_v1.$ === 'Just') {
-			var pageNum = _v1.a;
-			return pageNum;
-		} else {
-			return 0;
-		}
-	}();
-	var _v0 = model.searchResult;
-	if (_v0.$ === 'CharacterSearch') {
-		var charRequest = _v0.a;
 		return A2(
 			$mdgriffith$elm_ui$Element$column,
 			_List_fromArray(
 				[
-					$mdgriffith$elm_ui$Element$centerX,
-					$mdgriffith$elm_ui$Element$padding(10),
-					$mdgriffith$elm_ui$Element$spacing(5)
+					$mdgriffith$elm_ui$Element$padding(
+					A2($author$project$Main$percent, 5, infoSize.height)),
+					$mdgriffith$elm_ui$Element$spacing(
+					A2($author$project$Main$percent, 10, infoSize.height)),
+					$mdgriffith$elm_ui$Element$alignTop
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$mdgriffith$elm_ui$Element$paragraph,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$width(
+							$mdgriffith$elm_ui$Element$px(
+								A2($author$project$Main$percent, 90, infoSize.width)))
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$mdgriffith$elm_ui$Element$link,
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Element$Font$bold,
+									$mdgriffith$elm_ui$Element$Font$size(mainFontSize),
+									$mdgriffith$elm_ui$Element$mouseOver(
+									_List_fromArray(
+										[
+											$mdgriffith$elm_ui$Element$Font$color($author$project$Main$green)
+										])),
+									$mdgriffith$elm_ui$Element$Region$heading(1)
+								]),
+							{
+								label: $mdgriffith$elm_ui$Element$text(character.name),
+								url: 'character/' + $elm$core$String$fromInt(character.id)
+							})
+						])),
+					A2(
+					subInfo,
+					'Status:',
+					$author$project$Main$statusToString(character.status)),
+					A2(
+					subInfo,
+					'Species:',
+					A2(viewSpecies, character.species, character.subType))
+				]));
+	});
+var $author$project$Main$viewCharacterResultHorizontal = F2(
+	function (resultSize, character) {
+		var resultHeight = 0;
+		return A2(
+			$mdgriffith$elm_ui$Element$row,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$Background$color($author$project$Main$grey),
+					$mdgriffith$elm_ui$Element$height(
+					$mdgriffith$elm_ui$Element$px(resultSize.height)),
+					$mdgriffith$elm_ui$Element$width(
+					$mdgriffith$elm_ui$Element$px(resultSize.width)),
+					$mdgriffith$elm_ui$Element$Border$rounded(20),
+					$mdgriffith$elm_ui$Element$centerX
 				]),
 			_Utils_ap(
-				A2(
-					$elm$core$List$map,
-					$author$project$Main$viewCharacterResult(model.device),
-					charRequest.results),
 				_List_fromArray(
 					[
-						A3($author$project$Main$viewSearchPageNavigation, currentPage, charRequest.info, model.device)
+						A2(
+						$mdgriffith$elm_ui$Element$el,
+						_List_fromArray(
+							[
+								$mdgriffith$elm_ui$Element$height(
+								$mdgriffith$elm_ui$Element$px(resultSize.height)),
+								$mdgriffith$elm_ui$Element$width(
+								$mdgriffith$elm_ui$Element$px(resultSize.height)),
+								$mdgriffith$elm_ui$Element$Border$roundEach(
+								{bottomLeft: 20, bottomRight: 0, topLeft: 20, topRight: 0}),
+								$mdgriffith$elm_ui$Element$Background$uncropped(character.image)
+							]),
+						$mdgriffith$elm_ui$Element$none)
+					]),
+				_List_fromArray(
+					[
+						A2(
+						$author$project$Main$viewCharacterInfo,
+						A2($author$project$Main$setWindowWidthPx, resultSize.width - resultSize.height, resultSize),
+						character)
 					])));
-	} else {
-		return $mdgriffith$elm_ui$Element$text('Something went wrong tetya');
-	}
-};
-var $mdgriffith$elm_ui$Internal$Model$Left = {$: 'Left'};
-var $mdgriffith$elm_ui$Element$alignLeft = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Left);
+	});
+var $author$project$Main$viewCharacterResultVertical = F2(
+	function (resultWidth, character) {
+		return A2(
+			$mdgriffith$elm_ui$Element$column,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$Background$color($author$project$Main$grey),
+					$mdgriffith$elm_ui$Element$width(
+					$mdgriffith$elm_ui$Element$px(resultWidth)),
+					$mdgriffith$elm_ui$Element$Border$rounded(20),
+					$mdgriffith$elm_ui$Element$centerX
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$mdgriffith$elm_ui$Element$el,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$height(
+							$mdgriffith$elm_ui$Element$px(resultWidth)),
+							$mdgriffith$elm_ui$Element$width(
+							$mdgriffith$elm_ui$Element$px(resultWidth)),
+							$mdgriffith$elm_ui$Element$Border$roundEach(
+							{bottomLeft: 0, bottomRight: 0, topLeft: 20, topRight: 20}),
+							$mdgriffith$elm_ui$Element$Background$uncropped(character.image)
+						]),
+					$mdgriffith$elm_ui$Element$none)
+				]));
+	});
+var $author$project$Main$viewResultsPage = F2(
+	function (resultsPageSize, model) {
+		var resultsColumn = F3(
+			function (resultsColwidth, orientation, charList) {
+				return A2(
+					$mdgriffith$elm_ui$Element$column,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$spacing(
+							A2($author$project$Main$percent, 2, resultsPageSize.height)),
+							$mdgriffith$elm_ui$Element$Region$mainContent
+						]),
+					function () {
+						var resultSize = {
+							height: A2($author$project$Main$percent, 35, resultsColwidth),
+							width: resultsColwidth
+						};
+						if (orientation.$ === 'Landscape') {
+							return A2(
+								$elm$core$List$map,
+								$author$project$Main$viewCharacterResultHorizontal(resultSize),
+								charList);
+						} else {
+							return A2(
+								$elm$core$List$map,
+								$author$project$Main$viewCharacterResultVertical(resultSize.width),
+								charList);
+						}
+					}());
+			});
+		var paddingLeft = $mdgriffith$elm_ui$Element$paddingEach(
+			{
+				bottom: 0,
+				left: A2($author$project$Main$percent, 10, resultsPageSize.width),
+				right: 0,
+				top: A2($author$project$Main$percent, 5, resultsPageSize.height)
+			});
+		var paddingCenter = $mdgriffith$elm_ui$Element$paddingEach(
+			{
+				bottom: 0,
+				left: 0,
+				right: 0,
+				top: A2($author$project$Main$percent, 5, resultsPageSize.height)
+			});
+		var currentPage = function () {
+			var _v4 = $author$project$Main$getCurrentPage(model.route);
+			if (_v4.$ === 'Just') {
+				var pageNum = _v4.a;
+				return pageNum;
+			} else {
+				return 0;
+			}
+		}();
+		var _v0 = model.searchResult;
+		if (_v0.$ === 'CharacterSearch') {
+			var charRequest = _v0.a;
+			var _v1 = model.device.orientation;
+			if (_v1.$ === 'Landscape') {
+				var _v2 = model.device._class;
+				if (_v2.$ === 'Phone') {
+					return A2(
+						$mdgriffith$elm_ui$Element$el,
+						_List_fromArray(
+							[$mdgriffith$elm_ui$Element$centerX, paddingCenter]),
+						A3(
+							resultsColumn,
+							A2($author$project$Main$percent, 80, resultsPageSize.width),
+							$mdgriffith$elm_ui$Element$Landscape,
+							charRequest.results));
+				} else {
+					return A2(
+						$mdgriffith$elm_ui$Element$row,
+						_List_fromArray(
+							[$mdgriffith$elm_ui$Element$alignLeft, paddingLeft]),
+						_List_fromArray(
+							[
+								A3(
+								resultsColumn,
+								A2($author$project$Main$percent, 35, resultsPageSize.width),
+								$mdgriffith$elm_ui$Element$Landscape,
+								charRequest.results)
+							]));
+				}
+			} else {
+				var _v3 = model.device._class;
+				switch (_v3.$) {
+					case 'Phone':
+						return A2(
+							$mdgriffith$elm_ui$Element$el,
+							_List_fromArray(
+								[$mdgriffith$elm_ui$Element$centerX, paddingCenter]),
+							A3(
+								resultsColumn,
+								A2($author$project$Main$percent, 80, resultsPageSize.width),
+								$mdgriffith$elm_ui$Element$Portrait,
+								charRequest.results));
+					case 'Tablet':
+						return A2(
+							$mdgriffith$elm_ui$Element$el,
+							_List_fromArray(
+								[$mdgriffith$elm_ui$Element$centerX, paddingCenter]),
+							A3(
+								resultsColumn,
+								A2($author$project$Main$percent, 80, resultsPageSize.width),
+								$mdgriffith$elm_ui$Element$Landscape,
+								charRequest.results));
+					default:
+						return A2(
+							$mdgriffith$elm_ui$Element$row,
+							_List_fromArray(
+								[$mdgriffith$elm_ui$Element$alignLeft, paddingLeft]),
+							_List_fromArray(
+								[
+									A3(
+									resultsColumn,
+									A2($author$project$Main$percent, 35, resultsPageSize.width),
+									$mdgriffith$elm_ui$Element$Landscape,
+									charRequest.results)
+								]));
+				}
+			}
+		} else {
+			return $mdgriffith$elm_ui$Element$text('Something went wrong tetya');
+		}
+	});
+var $mdgriffith$elm_ui$Internal$Model$Navigation = {$: 'Navigation'};
+var $mdgriffith$elm_ui$Element$Region$navigation = $mdgriffith$elm_ui$Internal$Model$Describe($mdgriffith$elm_ui$Internal$Model$Navigation);
 var $mdgriffith$elm_ui$Internal$Model$Right = {$: 'Right'};
 var $mdgriffith$elm_ui$Element$alignRight = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Right);
 var $author$project$Main$viewTopBarButton = F2(
@@ -19735,22 +19797,26 @@ var $author$project$Main$viewTopBarButton = F2(
 			});
 	});
 var $author$project$Main$viewTopBarSearch = F2(
-	function (model, topBarHeight) {
-		var size = {height: topBarHeight - 15, width: 350};
-		var fontSize = 20;
+	function (searchBarContent, searchBarSize) {
+		var fontSize = A2($author$project$Main$percent, 60, searchBarSize.height);
 		return A2(
 			$mdgriffith$elm_ui$Element$row,
 			_List_fromArray(
 				[
 					$mdgriffith$elm_ui$Element$Background$color($author$project$Main$black),
 					$mdgriffith$elm_ui$Element$width(
-					$mdgriffith$elm_ui$Element$px(size.width)),
+					$mdgriffith$elm_ui$Element$px(searchBarSize.width)),
 					$mdgriffith$elm_ui$Element$height(
-					$mdgriffith$elm_ui$Element$px(size.height)),
-					$mdgriffith$elm_ui$Element$Border$rounded(30),
+					$mdgriffith$elm_ui$Element$px(searchBarSize.height)),
+					$mdgriffith$elm_ui$Element$Border$rounded(
+					A2($author$project$Main$percent, 35, searchBarSize.height)),
 					$mdgriffith$elm_ui$Element$paddingEach(
-					{bottom: 0, left: 5, right: 15, top: 0}),
-					$mdgriffith$elm_ui$Element$spacing(30)
+					{
+						bottom: 0,
+						left: A2($author$project$Main$percent, 20, searchBarSize.height),
+						right: A2($author$project$Main$percent, 25, searchBarSize.height),
+						top: 0
+					})
 				]),
 			_List_fromArray(
 				[
@@ -19764,9 +19830,10 @@ var $author$project$Main$viewTopBarSearch = F2(
 							$mdgriffith$elm_ui$Element$Font$color($author$project$Main$white),
 							$author$project$Main$noFocusShadow,
 							$mdgriffith$elm_ui$Element$Border$width(0),
-							$mdgriffith$elm_ui$Element$padding(((size.height - fontSize) / 2) | 0),
+							$mdgriffith$elm_ui$Element$padding(((searchBarSize.height - fontSize) / 2) | 0),
 							$mdgriffith$elm_ui$Element$Font$size(fontSize),
-							$mdgriffith$elm_ui$Element$Border$rounded(20),
+							$mdgriffith$elm_ui$Element$Border$rounded(
+							A2($author$project$Main$percent, 50, searchBarSize.height)),
 							$mdgriffith$elm_ui$Element$Events$onFocus($author$project$Main$SearchBarGetsFocus),
 							$mdgriffith$elm_ui$Element$Events$onLoseFocus($author$project$Main$SearchBarLosesFocus)
 						]),
@@ -19774,7 +19841,7 @@ var $author$project$Main$viewTopBarSearch = F2(
 						label: $mdgriffith$elm_ui$Element$Input$labelHidden('Search input'),
 						onChange: $author$project$Main$SearchBarChanged,
 						placeholder: $elm$core$Maybe$Nothing,
-						text: model.searchBarContent
+						text: searchBarContent
 					}),
 					A2(
 					$mdgriffith$elm_ui$Element$el,
@@ -19782,9 +19849,11 @@ var $author$project$Main$viewTopBarSearch = F2(
 						[
 							$mdgriffith$elm_ui$Element$Background$uncropped('Images/blue_search_icon.png'),
 							$mdgriffith$elm_ui$Element$height(
-							$mdgriffith$elm_ui$Element$px(size.height - 15)),
+							$mdgriffith$elm_ui$Element$px(
+								A2($author$project$Main$percent, 80, searchBarSize.height))),
 							$mdgriffith$elm_ui$Element$width(
-							$mdgriffith$elm_ui$Element$px(size.height - 15)),
+							$mdgriffith$elm_ui$Element$px(
+								A2($author$project$Main$percent, 80, searchBarSize.height))),
 							$mdgriffith$elm_ui$Element$alignRight
 						]),
 					A2(
@@ -19801,56 +19870,72 @@ var $author$project$Main$viewTopBarSearch = F2(
 						}))
 				]));
 	});
-var $author$project$Main$viewTopBar = function (model) {
-	var topBarHeight = 60;
-	var shouldSearchBarShow = function () {
-		var _v1 = model.route;
-		if (_v1.$ === 'SearchResultsPage') {
-			var _v2 = model.device._class;
-			if (_v2.$ === 'Phone') {
-				var _v3 = model.device.orientation;
-				if (_v3.$ === 'Portrait') {
-					return false;
+var $author$project$Main$viewTopBar = F4(
+	function (topBarSize, device, route, searchBarContent) {
+		var shouldSearchBarShow = function () {
+			if (route.$ === 'SearchResultsPage') {
+				var _v2 = device._class;
+				if (_v2.$ === 'Phone') {
+					var _v3 = device.orientation;
+					if (_v3.$ === 'Portrait') {
+						return false;
+					} else {
+						return true;
+					}
 				} else {
 					return true;
 				}
 			} else {
-				return true;
+				return false;
 			}
-		} else {
-			return false;
-		}
-	}();
-	var searchBar = function (bool) {
-		if (!bool) {
-			return $mdgriffith$elm_ui$Element$none;
-		} else {
-			return A2(
-				$mdgriffith$elm_ui$Element$el,
-				_List_fromArray(
-					[$mdgriffith$elm_ui$Element$alignLeft]),
-				A2($author$project$Main$viewTopBarSearch, model, topBarHeight));
-		}
-	};
-	return A2(
-		$mdgriffith$elm_ui$Element$row,
-		_List_fromArray(
-			[
-				$mdgriffith$elm_ui$Element$Background$color($author$project$Main$white),
-				$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-				$mdgriffith$elm_ui$Element$height(
-				$mdgriffith$elm_ui$Element$px(topBarHeight)),
-				A2($mdgriffith$elm_ui$Element$paddingXY, 30, 0),
-				$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
-				$mdgriffith$elm_ui$Element$spacing(20)
-			]),
-		_List_fromArray(
-			[
-				searchBar(shouldSearchBarShow),
-				A2($author$project$Main$viewTopBarButton, '/', 'Home'),
-				A2($author$project$Main$viewTopBarButton, '/About', 'About')
-			]));
-};
+		}();
+		var searchBar = function (bool) {
+			if (!bool) {
+				return $mdgriffith$elm_ui$Element$none;
+			} else {
+				return A2(
+					$mdgriffith$elm_ui$Element$el,
+					_List_fromArray(
+						[$mdgriffith$elm_ui$Element$alignLeft]),
+					function () {
+						var searchBarWidth = A2($author$project$Main$percent, 30, topBarSize.width);
+						var searchBarHeight = A2($author$project$Main$percent, 80, topBarSize.height);
+						return A2(
+							$author$project$Main$viewTopBarSearch,
+							searchBarContent,
+							A2($author$project$Main$WindowSize, searchBarWidth, searchBarHeight));
+					}());
+			}
+		};
+		return A2(
+			$mdgriffith$elm_ui$Element$row,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$Background$color($author$project$Main$white),
+					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+					$mdgriffith$elm_ui$Element$height(
+					$mdgriffith$elm_ui$Element$px(topBarSize.height)),
+					$mdgriffith$elm_ui$Element$paddingEach(
+					{
+						bottom: 0,
+						left: A2($author$project$Main$percent, 8, topBarSize.width),
+						right: A2($author$project$Main$percent, 2, topBarSize.width),
+						top: 0
+					}),
+					$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
+					$mdgriffith$elm_ui$Element$spacing(
+					A2($author$project$Main$percent, 30, topBarSize.height)),
+					$mdgriffith$elm_ui$Element$Font$size(
+					A2($author$project$Main$percent, 43, topBarSize.height)),
+					$mdgriffith$elm_ui$Element$Region$navigation
+				]),
+			_List_fromArray(
+				[
+					searchBar(shouldSearchBarShow),
+					A2($author$project$Main$viewTopBarButton, '/', 'Home'),
+					A2($author$project$Main$viewTopBarButton, '/About', 'About')
+				]));
+	});
 var $author$project$Main$view = function (model) {
 	return {
 		body: _List_fromArray(
@@ -19867,28 +19952,44 @@ var $author$project$Main$view = function (model) {
 							$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
 							$mdgriffith$elm_ui$Element$Font$color($author$project$Main$white)
 						]),
-					_List_fromArray(
-						[
-							$author$project$Main$viewTopBar(model),
-							function () {
-							var _v0 = model.route;
-							switch (_v0.$) {
-								case 'Home':
-									return $author$project$Main$viewHomePage(model);
-								case 'About':
-									return $author$project$Main$viewAboutPage(model);
-								case 'SearchResultsPage':
-									return $author$project$Main$viewResultsPage(model);
-								case 'NotFound':
-									return $mdgriffith$elm_ui$Element$text('page not found');
-								default:
-									var charId = _v0.a;
-									return $mdgriffith$elm_ui$Element$text(
-										'character Id: ' + $elm$core$String$fromInt(charId));
-							}
-						}(),
-							$author$project$Main$viewFooter
-						])))
+					function () {
+						var topBarHeight = A2($author$project$Main$percent, 7, model.windowSize.height);
+						return _List_fromArray(
+							[
+								A4(
+								$author$project$Main$viewTopBar,
+								A2($author$project$Main$setWindowHeightPx, topBarHeight, model.windowSize),
+								model.device,
+								model.route,
+								model.searchBarContent),
+								function () {
+								var _v0 = model.route;
+								switch (_v0.$) {
+									case 'Home':
+										return A3(
+											$author$project$Main$viewHomePage,
+											A2($author$project$Main$setWindowHeightPx, model.windowSize.height - topBarHeight, model.windowSize),
+											model.device,
+											model.searchBarContent);
+									case 'About':
+										return $author$project$Main$viewAboutPage(model);
+									case 'SearchResultsPage':
+										return A2(
+											$author$project$Main$viewResultsPage,
+											A2($author$project$Main$setWindowHeightPx, model.windowSize.height - topBarHeight, model.windowSize),
+											model);
+									case 'NotFound':
+										return $mdgriffith$elm_ui$Element$text('page not found');
+									default:
+										var charId = _v0.a;
+										return $mdgriffith$elm_ui$Element$text(
+											'character Id: ' + $elm$core$String$fromInt(charId));
+								}
+							}(),
+								$author$project$Main$viewFooter(
+								A2($author$project$Main$setWindowHeightPc, 1.5, model.windowSize))
+							]);
+					}()))
 			]),
 		title: 'Rick and Morty db'
 	};
