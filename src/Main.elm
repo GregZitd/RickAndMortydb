@@ -22,6 +22,10 @@ import Element.Border as Border
 import Element.Events as Events
 import Element.Region as Region
 
+import Palett exposing (..)
+import ResultsPage exposing (Navigate(..), SearchResult(..),  viewResultsPage)
+import Character exposing (..)
+
 
 --MAIN
 
@@ -41,33 +45,16 @@ type alias Model =
     , windowSize : WindowSize
     , route : Route
     , searchBarContent : String
-    , searchResult : SearchResult
-    , lastRequestSent : String
+      -- , lastRequestSent : String
     , searchBarFocused : Bool
+   -- , resultsPageModel : Maybe ResultsPage.Model
+    --Result
+    , searchResult : SearchResult
+    , currentSearchTerm : String
+    , currentPage : Int
+    , currentCharacterOnShow : Maybe Character
     }
 
-type alias Height = Int
-type alias Width = Int
-
-type alias Character =
-    { id : Int
-    , name : String
-    , status : Status
-    , species : String
-    , subType : String
-    , gender : String
-    , origin : CharacterOriginLocation
-    , location : CharacterOriginLocation
-    , image : String
-    , episode : List String
-    , url : String
-    }
-
-type Status =
-      Alive
-    | Dead
-    | Unknown
-    | InvalidStatus
 
 -- ROUTE PARSING
 
@@ -113,8 +100,10 @@ init flags url key =
             , route = toRoute url
             , searchBarContent = ""
             , searchResult = NoSearchInitiated
-            , lastRequestSent = ""
+            , currentSearchTerm = ""
+            , currentPage = 0
             , searchBarFocused = False
+            , currentCharacterOnShow = Nothing
             }
 
     in case D.decodeValue decodeFlags flags of
@@ -135,24 +124,6 @@ init flags url key =
 
 -- JS FLAGS
 
-type alias WindowSize =
-    { width : Int
-    , height : Int
-    }
-
-setWindowHeightPc : Float -> WindowSize -> WindowSize
-setWindowHeightPc perc window =
-    let height = window.height
-    in { window | height = percent perc height }
-
-setWindowWidthPc : Float -> WindowSize -> WindowSize
-setWindowWidthPc perc window =
-    let width = window.width
-    in { window | width = percent perc width }
-
-setWindowHeightPx : Int -> WindowSize -> WindowSize
-setWindowHeightPx size window =
-    { window | height = size }
 
 windowToDevice : Int -> Int -> Device
 windowToDevice width height =
@@ -160,11 +131,6 @@ windowToDevice width height =
         { width = width
         , height = height
         }
-
-setWindowWidthPx : Int -> WindowSize -> WindowSize
-setWindowWidthPx size window =
-    { window | width = size }
-
 
 decodeFlags : D.Decoder WindowSize
 decodeFlags =
@@ -186,15 +152,9 @@ type Msg =
     | SearchBarGetsFocus
     | SearchBarLosesFocus
     | KeyPress Key
-    | GoToResultsPage Navigate
+    | ResultsPageMsg ResultsPage.Msg
     | NoOp
-      
-type SearchResult =
-      Failure Http.Error
-    | Loading
-    | CharacterSearch CharacterRequest
-    | SingleCharacter Character
-    | NoSearchInitiated
+     
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
@@ -230,15 +190,16 @@ update msg model =
             searchButtonPressed model
     
         GotCharacterSearchResult responseTo result ->
-            case responseTo == model.lastRequestSent of
+            case responseTo == model.currentSearchTerm of
                 False ->
                     ( model, Cmd.none )
                 True ->
                     case result of
-                        Ok characterList ->
-                            ( { model | searchResult = CharacterSearch characterList }
-                              ,Cmd.none
+                        Ok characterRequest ->
+                            ( { model | searchResult = CharacterSearch characterRequest }
+                            , Cmd.none
                             )
+                                    
                         Err err ->
                             ( { model | searchResult = Failure err }
                             , Cmd.none
@@ -272,34 +233,10 @@ update msg model =
                 NonEnter ->
                     ( model, Cmd.none )
 
-        GoToResultsPage navigate ->
-            let newPageNum =
-                    case model.route of
-                        SearchResultsPage parameters ->
-                            case navigate of
-                                Next ->
-                                    ( Maybe.withDefault 0 parameters.page ) + 1
-                                Prev ->
-                                    (Maybe.withDefault 0 parameters.page ) - 1
-                                PageNum num ->
-                                    num
-                                    --This 1 here is just a dummy value. Should change it in the future for something that makes sense!!!
-                        _ -> 1
-            in case model.route of
-                   SearchResultsPage parameters ->
-                       ( model, Cmd.batch
-                                    [ Nav.pushUrl model.key
-                                            ( searchParametersToString
-                                                  { parameters |
-                                                        page = Just newPageNum
-                                                  }
-                                            )
-                                    , resetViewport
-                                    ]
-                       )
-                   _ ->
-                       ( model, Cmd.none )
-
+        ResultsPageMsg resultsMsg ->
+            let (newModel, newMsg) =  ResultsPage.update resultsMsg model
+            in (newModel, Cmd.map ResultsPageMsg newMsg)
+        
         NoOp ->
             ( model, Cmd.none )
                            
@@ -335,9 +272,10 @@ handleUrlChange model  =
                                        getCharacterSearch searchTerm page model
 
                                    Nothing ->
-                                       ( { model | route = NotFound }
-                                       , Cmd.none
-                                       )
+                                       getCharacterSearch searchTerm 1 model
+                                       --( { model | route = NotFound }
+                                       --, Cmd.none
+                                       
 
                            Nothing ->
                                ( { model | route = NotFound }
@@ -357,9 +295,6 @@ focusSearchBox : Cmd Msg
 focusSearchBox =
     Task.attempt (\_ -> NoOp) (Dom.focus "home-page-searchbar")
 
-resetViewport : Cmd Msg
-resetViewport =
-    Task.perform (\_ -> NoOp) (Dom.setViewport 0 0)
 
 --SUBSCRIPTIONS
 
@@ -414,11 +349,14 @@ view model =
                               About ->
                                   viewAboutPage model
                               SearchResultsPage _ ->
-                                  viewResultsPage
-                                      (setWindowHeightPx
-                                           (model.windowSize.height - topBarHeight)
-                                           model.windowSize)
-                                      model
+                                  Element.map ResultsPageMsg
+                                      <| viewResultsPage
+                                          (setWindowHeightPx
+                                               (model.windowSize.height - topBarHeight)
+                                               model.windowSize
+                                          )
+                                          model
+                                                
                               NotFound ->
                                   text "page not found"
                               CharacterPage charId ->
@@ -547,302 +485,6 @@ viewFooter footerSize =
         ] <|
         [ text "Developed by Gergely Malinoczki" ]
 
---VIEW RESULTS PAGE
-
-viewResultsPage : WindowSize -> Model -> Element Msg
-viewResultsPage resultsPageSize model =
-    let currentPage =
-            case getCurrentPage model.route of
-                Just pageNum -> pageNum
-                Nothing -> 0
-        
-        paddingCenter =
-            paddingEach
-               { top = percent 5 resultsPageSize.height
-               , bottom = 0, left = 0, right = 0
-               }
-        paddingLeft = 
-            paddingEach
-               { top = percent 5 resultsPageSize.height
-               , left = percent 10 resultsPageSize.width
-               , bottom = 0, right = 0
-               }
-                                                
-        resultsColumn : Width -> Orientation -> List Character -> Element Msg
-        resultsColumn resultsColwidth orientation charList =
-           column
-              [ 
-               spacing (percent 2 resultsPageSize.height)
-              , Region.mainContent
-              --, explain Debug.todo
-              ] <|
-                  let resultSize =
-                          { width = resultsColwidth
-                          , height = percent 35 resultsColwidth
-                          }
-                         
-                  in case orientation of
-                         Landscape ->
-                             List.map
-                                 ( viewCharacterResultHorizontal resultSize )
-                                 charList
-                         Portrait ->
-                             List.map
-                                 ( viewCharacterResultVertical resultSize.width )
-                                 charList
-              
-                                                                    
-    in case model.searchResult of
-           CharacterSearch charRequest ->
-               case model.device.orientation of
-                       Landscape ->
-                           case model.device.class of
-                               Phone ->
-                                   el
-                                     [ centerX
-                                     , paddingCenter
-                                     ] <|
-                                       resultsColumn
-                                          (percent 80 resultsPageSize.width)
-                                          Landscape
-                                          charRequest.results
-                               _ ->
-                                   row
-                                     [ alignLeft
-                                     , paddingLeft
-                                     ]
-                                     [ resultsColumn
-                                           (percent 35 resultsPageSize.width)
-                                           Landscape
-                                           charRequest.results
-                                     ]
-                       Portrait ->
-                           case model.device.class of
-                               Phone ->
-                                   el
-                                     [ centerX
-                                     , paddingCenter
-                                     ] <|
-                                       resultsColumn
-                                           ( percent 80 resultsPageSize.width )
-                                           Portrait
-                                           charRequest.results
-                               Tablet ->
-                                   el
-                                     [ centerX
-                                     , paddingCenter
-                                     ] <|
-                                       resultsColumn
-                                           ( percent 80 resultsPageSize.width )
-                                           Landscape
-                                           charRequest.results
-                               _ ->
-                                   row
-                                     [ alignLeft
-                                     , paddingLeft
-                                     ]
-                                     [ resultsColumn
-                                           ( percent 35 resultsPageSize.width )
-                                           Landscape
-                                           charRequest.results
-                                     ]
-               
-           _ -> text "Something went wrong tetya"
-        
-getCurrentPage : Route -> Maybe Int
-getCurrentPage route =
-    case route of
-        SearchResultsPage parameters -> parameters.page
-        _ -> Nothing
-                   
-viewCharacterResultHorizontal : WindowSize  -> Character -> Element Msg
-viewCharacterResultHorizontal resultSize character =
-    let resultHeight = 0
-    in row
-        [ Background.color grey
-        , height <| px resultSize.height
-        , width <| px resultSize.width
-        , Border.rounded 20
-        , centerX
-        ] <| 
-        [ el
-          [ height <| px resultSize.height
-          , width <| px resultSize.height
-          , Border.roundEach
-                { topLeft = 20
-                , topRight = 0
-                , bottomLeft = 20
-                , bottomRight = 0
-                }
-          , Background.uncropped character.image
-          ]
-          none
-        ]
-        ++ [viewCharacterInfo
-                (setWindowWidthPx
-                     (resultSize.width - resultSize.height)
-                     resultSize
-                )
-                character]
-    
-viewCharacterResultVertical : Width -> Character -> Element Msg
-viewCharacterResultVertical resultWidth character =
-    column
-         [ Background.color grey
-         , width <| px resultWidth
-         , Border.rounded 20
-         , centerX
-         ] <|
-         [ el
-             [ height <| px resultWidth
-             , width <| px resultWidth
-             , Border.roundEach
-                 { topLeft = 20
-                 , topRight = 20
-                 , bottomLeft = 0
-                 , bottomRight = 0
-                 }
-             , Background.uncropped character.image
-             ]
-             none
-         ]
-         
-
-    
-viewCharacterInfo : WindowSize -> Character -> Element Msg
-viewCharacterInfo infoSize character =
-    let viewSpecies species subType =
-            case subType of
-                "" -> species
-                _ -> species ++ " - " ++ subType
-        subInfo title value =
-            column
-                   [ spacing (percent 2 infoSize.height) ]
-                   [ paragraph
-                         [ Font.size (percent 55 mainFontSize)
-                         , Font.color <| rgb255 211 211 211
-                         , Region.heading 2
-                         ] <|
-                         [ text title ]
-                   , paragraph
-                         [ Region.heading 3
-                         , Font.size (percent 70 mainFontSize)
-                         ] <|
-                         [ text value ]
-                   ]
-        mainFontSize = percent 15 infoSize.height
-    in column
-        [ padding (percent 5 infoSize.height)
-        , spacing (percent 10 infoSize.height)
-        , alignTop
-        ]
-        [ paragraph
-              [ width <| px (percent 90 infoSize.width)
-              ]
-              [ link
-                    [ Font.bold
-                    , Font.size mainFontSize
-                    , mouseOver [ Font.color green ]
-                    , Region.heading 1
-                    ]
-                    { url = "character/" ++ ( String.fromInt character.id )
-                    , label = text character.name
-                    }
-              ]
-        , subInfo "Status:" (statusToString character.status)
-        , subInfo "Species:" ( viewSpecies character.species character.subType )
-              
-        ]
-
-
-viewSearchPageNavigation : Int -> RequestInfo -> Device -> Element Msg
-viewSearchPageNavigation currentPageArg info device =
-    let currentPageRadius =
-            case device.class of
-                Phone ->
-                    case device.orientation of
-                        Portrait -> 1
-                        Landscape -> 2
-                _ -> 3
-                     
-        showThesePageNums : Int-> Int -> List (Element Msg)
-        showThesePageNums pages currentPage =
-            if pages <= 5 then
-                List.map pageNumberButton ( List.range 1 pages )
-            else
-                let lowerBound = max 1 (currentPage - currentPageRadius)
-                    upperBound = min pages (currentPage + currentPageRadius)
-                in     [ if lowerBound > 1 then text "..." else none ]
-                    ++ List.map pageNumberButton ( List.range lowerBound upperBound )
-                    ++ [ if upperBound < pages then text "..." else none ]
-                        
-        prevNextAttribute =
-            [ Background.color green
-            , Border.rounded 10
-            , height <| px 30
-            , width <| px 60
-            , Font.color black
-            , Font.center
-            , Font.underline
-            , noFocusShadow
-            ]
-            
-        prevButton =
-            case info.prev of
-                Nothing ->
-                    none
-                Just _ ->
-                    Input.button
-                        prevNextAttribute
-                        { onPress = Just ( GoToResultsPage Prev )
-                        , label = text "Prev"
-                        }
-                        
-        nextButton =
-            case info.next of
-                Nothing ->
-                    none
-                Just _ ->
-                    Input.button
-                        prevNextAttribute
-                        { onPress = Just ( GoToResultsPage Next )
-                        , label = text "Next"
-                        }
-                        
-        pageNumberButton : Int -> Element Msg
-        pageNumberButton num =
-            Input.button
-                [ Background.color green
-                , Border.rounded 10
-                , height <| px 30
-                , padding 5
-                , Font.color black
-                , Font.center
-                , noFocusShadow
-                ]
-                { onPress = Just ( GoToResultsPage <| PageNum num )
-                , label = text <| String.fromInt num
-                }
-                
-    in case info.pages of
-           1 ->
-               --dont show navigation if there is only one page
-               none
-           _ ->
-               row
-                  [ centerX
-                  , spacing 15
-                  , Region.navigation
-                  ] <|
-                  [ prevButton ]
-                  ++ showThesePageNums info.pages currentPageArg
-                  ++ [ nextButton
-                     ]
-
-type Navigate =
-      Next
-    | Prev
-    | PageNum Int
 
 -- VIEW HOME PAGE
              
@@ -981,53 +623,14 @@ viewAboutPage model =
         [ text "About page"
         ]
        
--- PALETT
-
-noFocusShadow : Attribute Msg
-noFocusShadow =
-    focused
-        [ Border.shadow
-              { offset = (0,0)
-              , size = 0
-              , blur = 0
-              , color = white
-                        }
-        ]
-    
-black : Color
-black = rgb255 0 0 0
-
-white : Color
-white = rgb255 255 255 255
-
-orange : Color
-orange = rgb255 255 140 0
-         
-green : Color
-green = rgb255 0 204 204
-
-grey : Color
-grey = rgb255 105 105 105
-
-percent : Float -> Int -> Int
-percent perc num =
-    round <| perc * (toFloat num) / 100
-
-
-statusToString : Status -> String
-statusToString status =
-    case status of
-        Alive -> "Alive"
-        Dead -> "Dead"
-        Unknown -> "unknown"
-        InvalidStatus -> "Invalid status"
-       
 --HTTP
 
 --initiates search and sets lastRequest to the search term to avoid http race conditions
 getCharacterSearch : String -> Int -> Model -> ( Model, Cmd Msg )
 getCharacterSearch searchTerm page model =
-    let newModel = { model | lastRequestSent = searchTerm }
+    let newModel = { model | currentSearchTerm = searchTerm
+                           , currentPage = page
+                   }
     in ( newModel
        , Http.get
            { url = "https://rickandmortyapi.com/api/character/?name="
@@ -1048,65 +651,5 @@ getSingleCaracter charId =
         , expect = Http.expectJson GotSingleCharacter decodeCharacter
         }
 
-decodeCharacter : D.Decoder Character
-decodeCharacter =
-    D.succeed Character
-        |> DP.required "id" D.int 
-        |> DP.required "name" D.string
-        |> DP.required "status" decodeStatus
-        |> DP.required "species" D.string
-        |> DP.required "type" D.string
-        |> DP.required "gender" D.string
-        |> DP.required "origin" decodeCharacterOriginLocation
-        |> DP.required "location" decodeCharacterOriginLocation
-        |> DP.required "image" D.string
-        |> DP.required "episode" ( D.list D.string )
-        |> DP.required "url" D.string
-        
-decodeStatus : D.Decoder Status
-decodeStatus =
-    let stringToStatus string =
-            case string of
-                "Alive" -> Alive
-                "Dead" -> Dead
-                "unknown" -> Unknown
-                _ -> InvalidStatus
-    in D.map stringToStatus D.string
 
-decodeCharacterOriginLocation : D.Decoder CharacterOriginLocation
-decodeCharacterOriginLocation =
-    D.map2 CharacterOriginLocation
-        ( D.field "name" D.string )
-        ( D.field "url" D.string )
-              
 
-type alias CharacterOriginLocation =
-    { name : String
-    , url : String
-    }
-
-type alias CharacterRequest =
-    { info : RequestInfo
-    , results : List Character
-    }
-
-type alias RequestInfo =
-    { count : Int
-    , pages : Int
-    , next : Maybe String
-    , prev : Maybe String
-    }
-
-decodeRequestInfo : D.Decoder RequestInfo
-decodeRequestInfo =
-    D.succeed RequestInfo
-        |> DP.required "count" D.int
-        |> DP.required "pages" D.int
-        |> DP.required "next" ( D.nullable D.string )
-        |> DP.required "prev" ( D.nullable D.string )
-
-decodeCharacterRequest : D.Decoder CharacterRequest
-decodeCharacterRequest =
-    D.map2 CharacterRequest
-        ( D.field "info" decodeRequestInfo )
-        ( D.field "results" ( D.list decodeCharacter ) )

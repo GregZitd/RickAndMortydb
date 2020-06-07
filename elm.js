@@ -10735,15 +10735,15 @@ var $elm$core$Basics$never = function (_v0) {
 };
 var $elm$browser$Browser$application = _Browser_application;
 var $mdgriffith$elm_ui$Element$Landscape = {$: 'Landscape'};
-var $author$project$Main$NoSearchInitiated = {$: 'NoSearchInitiated'};
+var $author$project$ResultsPage$NoSearchInitiated = {$: 'NoSearchInitiated'};
 var $mdgriffith$elm_ui$Element$Tablet = {$: 'Tablet'};
-var $author$project$Main$WindowSize = F2(
+var $author$project$Palett$WindowSize = F2(
 	function (width, height) {
 		return {height: height, width: width};
 	});
 var $author$project$Main$decodeFlags = A3(
 	$elm$json$Json$Decode$map2,
-	$author$project$Main$WindowSize,
+	$author$project$Palett$WindowSize,
 	A2($elm$json$Json$Decode$field, 'width', $elm$json$Json$Decode$int),
 	A2($elm$json$Json$Decode$field, 'height', $elm$json$Json$Decode$int));
 var $author$project$Main$NoOp = {$: 'NoOp'};
@@ -10778,11 +10778,11 @@ var $author$project$Main$GotCharacterSearchResult = F2(
 	function (a, b) {
 		return {$: 'GotCharacterSearchResult', a: a, b: b};
 	});
-var $author$project$Main$CharacterRequest = F2(
+var $author$project$Character$CharacterRequest = F2(
 	function (info, results) {
 		return {info: info, results: results};
 	});
-var $author$project$Main$Character = function (id) {
+var $author$project$Character$Character = function (id) {
 	return function (name) {
 		return function (status) {
 			return function (species) {
@@ -10805,30 +10805,30 @@ var $author$project$Main$Character = function (id) {
 		};
 	};
 };
-var $author$project$Main$CharacterOriginLocation = F2(
+var $author$project$Character$CharacterOriginLocation = F2(
 	function (name, url) {
 		return {name: name, url: url};
 	});
-var $author$project$Main$decodeCharacterOriginLocation = A3(
+var $author$project$Character$decodeCharacterOriginLocation = A3(
 	$elm$json$Json$Decode$map2,
-	$author$project$Main$CharacterOriginLocation,
+	$author$project$Character$CharacterOriginLocation,
 	A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string),
 	A2($elm$json$Json$Decode$field, 'url', $elm$json$Json$Decode$string));
-var $author$project$Main$Alive = {$: 'Alive'};
-var $author$project$Main$Dead = {$: 'Dead'};
-var $author$project$Main$InvalidStatus = {$: 'InvalidStatus'};
-var $author$project$Main$Unknown = {$: 'Unknown'};
-var $author$project$Main$decodeStatus = function () {
+var $author$project$Character$Alive = {$: 'Alive'};
+var $author$project$Character$Dead = {$: 'Dead'};
+var $author$project$Character$InvalidStatus = {$: 'InvalidStatus'};
+var $author$project$Character$Unknown = {$: 'Unknown'};
+var $author$project$Character$decodeStatus = function () {
 	var stringToStatus = function (string) {
 		switch (string) {
 			case 'Alive':
-				return $author$project$Main$Alive;
+				return $author$project$Character$Alive;
 			case 'Dead':
-				return $author$project$Main$Dead;
+				return $author$project$Character$Dead;
 			case 'unknown':
-				return $author$project$Main$Unknown;
+				return $author$project$Character$Unknown;
 			default:
-				return $author$project$Main$InvalidStatus;
+				return $author$project$Character$InvalidStatus;
 		}
 	};
 	return A2($elm$json$Json$Decode$map, stringToStatus, $elm$json$Json$Decode$string);
@@ -10841,7 +10841,7 @@ var $NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required = F3(
 			A2($elm$json$Json$Decode$field, key, valDecoder),
 			decoder);
 	});
-var $author$project$Main$decodeCharacter = A3(
+var $author$project$Character$decodeCharacter = A3(
 	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
 	'url',
 	$elm$json$Json$Decode$string,
@@ -10856,11 +10856,11 @@ var $author$project$Main$decodeCharacter = A3(
 			A3(
 				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
 				'location',
-				$author$project$Main$decodeCharacterOriginLocation,
+				$author$project$Character$decodeCharacterOriginLocation,
 				A3(
 					$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
 					'origin',
-					$author$project$Main$decodeCharacterOriginLocation,
+					$author$project$Character$decodeCharacterOriginLocation,
 					A3(
 						$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
 						'gender',
@@ -10876,7 +10876,7 @@ var $author$project$Main$decodeCharacter = A3(
 								A3(
 									$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
 									'status',
-									$author$project$Main$decodeStatus,
+									$author$project$Character$decodeStatus,
 									A3(
 										$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
 										'name',
@@ -10885,8 +10885,8 @@ var $author$project$Main$decodeCharacter = A3(
 											$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
 											'id',
 											$elm$json$Json$Decode$int,
-											$elm$json$Json$Decode$succeed($author$project$Main$Character))))))))))));
-var $author$project$Main$RequestInfo = F4(
+											$elm$json$Json$Decode$succeed($author$project$Character$Character))))))))))));
+var $author$project$Character$RequestInfo = F4(
 	function (count, pages, next, prev) {
 		return {count: count, next: next, pages: pages, prev: prev};
 	});
@@ -10900,7 +10900,7 @@ var $elm$json$Json$Decode$nullable = function (decoder) {
 				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder)
 			]));
 };
-var $author$project$Main$decodeRequestInfo = A3(
+var $author$project$Character$decodeRequestInfo = A3(
 	$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
 	'prev',
 	$elm$json$Json$Decode$nullable($elm$json$Json$Decode$string),
@@ -10916,15 +10916,15 @@ var $author$project$Main$decodeRequestInfo = A3(
 				$NoRedInk$elm_json_decode_pipeline$Json$Decode$Pipeline$required,
 				'count',
 				$elm$json$Json$Decode$int,
-				$elm$json$Json$Decode$succeed($author$project$Main$RequestInfo)))));
-var $author$project$Main$decodeCharacterRequest = A3(
+				$elm$json$Json$Decode$succeed($author$project$Character$RequestInfo)))));
+var $author$project$Character$decodeCharacterRequest = A3(
 	$elm$json$Json$Decode$map2,
-	$author$project$Main$CharacterRequest,
-	A2($elm$json$Json$Decode$field, 'info', $author$project$Main$decodeRequestInfo),
+	$author$project$Character$CharacterRequest,
+	A2($elm$json$Json$Decode$field, 'info', $author$project$Character$decodeRequestInfo),
 	A2(
 		$elm$json$Json$Decode$field,
 		'results',
-		$elm$json$Json$Decode$list($author$project$Main$decodeCharacter)));
+		$elm$json$Json$Decode$list($author$project$Character$decodeCharacter)));
 var $elm$http$Http$BadStatus_ = F2(
 	function (a, b) {
 		return {$: 'BadStatus_', a: a, b: b};
@@ -11177,7 +11177,7 @@ var $author$project$Main$getCharacterSearch = F3(
 	function (searchTerm, page, model) {
 		var newModel = _Utils_update(
 			model,
-			{lastRequestSent: searchTerm});
+			{currentPage: page, currentSearchTerm: searchTerm});
 		return _Utils_Tuple2(
 			newModel,
 			$elm$http$Http$get(
@@ -11185,7 +11185,7 @@ var $author$project$Main$getCharacterSearch = F3(
 					expect: A2(
 						$elm$http$Http$expectJson,
 						$author$project$Main$GotCharacterSearchResult(searchTerm),
-						$author$project$Main$decodeCharacterRequest),
+						$author$project$Character$decodeCharacterRequest),
 					url: 'https://rickandmortyapi.com/api/character/?name=' + (searchTerm + ('&page=' + $elm$core$String$fromInt(page)))
 				}));
 	});
@@ -11195,7 +11195,7 @@ var $author$project$Main$GotSingleCharacter = function (a) {
 var $author$project$Main$getSingleCaracter = function (charId) {
 	return $elm$http$Http$get(
 		{
-			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotSingleCharacter, $author$project$Main$decodeCharacter),
+			expect: A2($elm$http$Http$expectJson, $author$project$Main$GotSingleCharacter, $author$project$Character$decodeCharacter),
 			url: 'https://rickandmortyapi.com/api/character/' + $elm$core$String$fromInt(charId)
 		});
 };
@@ -11212,11 +11212,7 @@ var $author$project$Main$handleUrlChange = function (model) {
 					var page = _v2.a;
 					return A3($author$project$Main$getCharacterSearch, searchTerm, page, model);
 				} else {
-					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{route: $author$project$Main$NotFound}),
-						$elm$core$Platform$Cmd$none);
+					return A3($author$project$Main$getCharacterSearch, searchTerm, 1, model);
 				}
 			} else {
 				return _Utils_Tuple2(
@@ -11631,15 +11627,17 @@ var $author$project$Main$windowToDevice = F2(
 var $author$project$Main$init = F3(
 	function (flags, url, key) {
 		var model = {
+			currentCharacterOnShow: $elm$core$Maybe$Nothing,
+			currentPage: 0,
+			currentSearchTerm: '',
 			device: {_class: $mdgriffith$elm_ui$Element$Tablet, orientation: $mdgriffith$elm_ui$Element$Landscape},
 			key: key,
-			lastRequestSent: '',
 			route: $author$project$Main$toRoute(url),
 			searchBarContent: '',
 			searchBarFocused: false,
-			searchResult: $author$project$Main$NoSearchInitiated,
+			searchResult: $author$project$ResultsPage$NoSearchInitiated,
 			url: url,
-			windowSize: A2($author$project$Main$WindowSize, 0, 0)
+			windowSize: A2($author$project$Palett$WindowSize, 0, 0)
 		};
 		var _v0 = A2($elm$json$Json$Decode$decodeValue, $author$project$Main$decodeFlags, flags);
 		if (_v0.$ === 'Ok') {
@@ -11649,7 +11647,7 @@ var $author$project$Main$init = F3(
 					model,
 					{
 						device: A2($author$project$Main$windowToDevice, flagsDecoded.width, flagsDecoded.height),
-						windowSize: A2($author$project$Main$WindowSize, flagsDecoded.width, flagsDecoded.height)
+						windowSize: A2($author$project$Palett$WindowSize, flagsDecoded.width, flagsDecoded.height)
 					}));
 			var initModel = _v1.a;
 			var initCmdMsg = _v1.b;
@@ -11878,24 +11876,20 @@ var $author$project$Main$subscriptions = function (model) {
 				$elm$browser$Browser$Events$onKeyPress($author$project$Main$keyDecoder)
 			]));
 };
-var $author$project$Main$CharacterSearch = function (a) {
+var $author$project$ResultsPage$CharacterSearch = function (a) {
 	return {$: 'CharacterSearch', a: a};
 };
-var $author$project$Main$Failure = function (a) {
+var $author$project$ResultsPage$Failure = function (a) {
 	return {$: 'Failure', a: a};
 };
-var $author$project$Main$SingleCharacter = function (a) {
+var $author$project$Main$ResultsPageMsg = function (a) {
+	return {$: 'ResultsPageMsg', a: a};
+};
+var $author$project$ResultsPage$SingleCharacter = function (a) {
 	return {$: 'SingleCharacter', a: a};
 };
 var $elm$browser$Browser$Navigation$load = _Browser_load;
 var $elm$browser$Browser$Navigation$pushUrl = _Browser_pushUrl;
-var $elm$browser$Browser$Dom$setViewport = _Browser_setViewport;
-var $author$project$Main$resetViewport = A2(
-	$elm$core$Task$perform,
-	function (_v0) {
-		return $author$project$Main$NoOp;
-	},
-	A2($elm$browser$Browser$Dom$setViewport, 0, 0));
 var $author$project$Main$searchButtonPressed = function (model) {
 	var _v0 = model.searchBarContent;
 	if (_v0 === '') {
@@ -11905,11 +11899,6 @@ var $author$project$Main$searchButtonPressed = function (model) {
 			model,
 			A2($elm$browser$Browser$Navigation$pushUrl, model.key, '/search?charname=' + (model.searchBarContent + '&page=1')));
 	}
-};
-var $author$project$Main$searchParametersToString = function (parameters) {
-	var page = A2($elm$core$Maybe$withDefault, 0, parameters.page);
-	var charname = A2($elm$core$Maybe$withDefault, '', parameters.charname);
-	return '/search?charname=' + (charname + ('&page=' + $elm$core$String$fromInt(page)));
 };
 var $elm$url$Url$addPort = F2(
 	function (maybePort, starter) {
@@ -11955,6 +11944,105 @@ var $elm$url$Url$toString = function (url) {
 					_Utils_ap(http, url.host)),
 				url.path)));
 };
+var $author$project$ResultsPage$modelToUrl = F2(
+	function (charName, page) {
+		return 'search?charname=' + (charName + ('&page=' + $elm$core$String$fromInt(page)));
+	});
+var $author$project$ResultsPage$NoOp = {$: 'NoOp'};
+var $elm$browser$Browser$Dom$setViewport = _Browser_setViewport;
+var $author$project$ResultsPage$resetViewport = A2(
+	$elm$core$Task$perform,
+	function (_v0) {
+		return $author$project$ResultsPage$NoOp;
+	},
+	A2($elm$browser$Browser$Dom$setViewport, 0, 0));
+var $author$project$ResultsPage$update = F2(
+	function (msg, model) {
+		var _v0 = model.searchResult;
+		if (_v0.$ === 'CharacterSearch') {
+			var charRequest = _v0.a;
+			switch (msg.$) {
+				case 'GoToResultsPage':
+					var navigate = msg.a;
+					switch (navigate.$) {
+						case 'Prev':
+							var cp = model.currentPage;
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{currentPage: cp - 1}),
+								function () {
+									var _v3 = charRequest.info.prev;
+									if (_v3.$ === 'Just') {
+										var url = _v3.a;
+										return $elm$core$Platform$Cmd$batch(
+											_List_fromArray(
+												[
+													A2(
+													$elm$browser$Browser$Navigation$pushUrl,
+													model.key,
+													A2($author$project$ResultsPage$modelToUrl, model.currentSearchTerm, model.currentPage - 1)),
+													$author$project$ResultsPage$resetViewport
+												]));
+									} else {
+										return $elm$core$Platform$Cmd$none;
+									}
+								}());
+						case 'Next':
+							var cp = model.currentPage;
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{currentPage: cp + 1}),
+								function () {
+									var _v4 = charRequest.info.next;
+									if (_v4.$ === 'Just') {
+										var url = _v4.a;
+										return $elm$core$Platform$Cmd$batch(
+											_List_fromArray(
+												[
+													A2(
+													$elm$browser$Browser$Navigation$pushUrl,
+													model.key,
+													A2($author$project$ResultsPage$modelToUrl, model.currentSearchTerm, model.currentPage + 1)),
+													$author$project$ResultsPage$resetViewport
+												]));
+									} else {
+										return $elm$core$Platform$Cmd$none;
+									}
+								}());
+						default:
+							var num = navigate.a;
+							return _Utils_Tuple2(
+								_Utils_update(
+									model,
+									{currentPage: num}),
+								$elm$core$Platform$Cmd$batch(
+									_List_fromArray(
+										[
+											A2(
+											$elm$browser$Browser$Navigation$pushUrl,
+											model.key,
+											A2($author$project$ResultsPage$modelToUrl, model.currentSearchTerm, num)),
+											$author$project$ResultsPage$resetViewport
+										])));
+					}
+				case 'NoOp':
+					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+				default:
+					var character = msg.a;
+					return _Utils_Tuple2(
+						_Utils_update(
+							model,
+							{
+								currentCharacterOnShow: $elm$core$Maybe$Just(character)
+							}),
+						$elm$core$Platform$Cmd$none);
+			}
+		} else {
+			return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+		}
+	});
 var $author$project$Main$update = F2(
 	function (msg, model) {
 		switch (msg.$) {
@@ -11991,7 +12079,7 @@ var $author$project$Main$update = F2(
 						model,
 						{
 							device: A2($author$project$Main$windowToDevice, width, height),
-							windowSize: A2($author$project$Main$WindowSize, width, height)
+							windowSize: A2($author$project$Palett$WindowSize, width, height)
 						}),
 					$elm$core$Platform$Cmd$none);
 			case 'SearchBarChanged':
@@ -12006,17 +12094,17 @@ var $author$project$Main$update = F2(
 			case 'GotCharacterSearchResult':
 				var responseTo = msg.a;
 				var result = msg.b;
-				var _v2 = _Utils_eq(responseTo, model.lastRequestSent);
+				var _v2 = _Utils_eq(responseTo, model.currentSearchTerm);
 				if (!_v2) {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				} else {
 					if (result.$ === 'Ok') {
-						var characterList = result.a;
+						var characterRequest = result.a;
 						return _Utils_Tuple2(
 							_Utils_update(
 								model,
 								{
-									searchResult: $author$project$Main$CharacterSearch(characterList)
+									searchResult: $author$project$ResultsPage$CharacterSearch(characterRequest)
 								}),
 							$elm$core$Platform$Cmd$none);
 					} else {
@@ -12025,7 +12113,7 @@ var $author$project$Main$update = F2(
 							_Utils_update(
 								model,
 								{
-									searchResult: $author$project$Main$Failure(err)
+									searchResult: $author$project$ResultsPage$Failure(err)
 								}),
 							$elm$core$Platform$Cmd$none);
 					}
@@ -12038,7 +12126,7 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								searchResult: $author$project$Main$SingleCharacter(character)
+								searchResult: $author$project$ResultsPage$SingleCharacter(character)
 							}),
 						$elm$core$Platform$Cmd$none);
 				} else {
@@ -12047,7 +12135,7 @@ var $author$project$Main$update = F2(
 						_Utils_update(
 							model,
 							{
-								searchResult: $author$project$Main$Failure(err)
+								searchResult: $author$project$ResultsPage$Failure(err)
 							}),
 						$elm$core$Platform$Cmd$none);
 				}
@@ -12075,47 +12163,14 @@ var $author$project$Main$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			case 'GoToResultsPage':
-				var navigate = msg.a;
-				var newPageNum = function () {
-					var _v8 = model.route;
-					if (_v8.$ === 'SearchResultsPage') {
-						var parameters = _v8.a;
-						switch (navigate.$) {
-							case 'Next':
-								return A2($elm$core$Maybe$withDefault, 0, parameters.page) + 1;
-							case 'Prev':
-								return A2($elm$core$Maybe$withDefault, 0, parameters.page) - 1;
-							default:
-								var num = navigate.a;
-								return num;
-						}
-					} else {
-						return 1;
-					}
-				}();
-				var _v7 = model.route;
-				if (_v7.$ === 'SearchResultsPage') {
-					var parameters = _v7.a;
-					return _Utils_Tuple2(
-						model,
-						$elm$core$Platform$Cmd$batch(
-							_List_fromArray(
-								[
-									A2(
-									$elm$browser$Browser$Navigation$pushUrl,
-									model.key,
-									$author$project$Main$searchParametersToString(
-										_Utils_update(
-											parameters,
-											{
-												page: $elm$core$Maybe$Just(newPageNum)
-											}))),
-									$author$project$Main$resetViewport
-								])));
-				} else {
-					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
-				}
+			case 'ResultsPageMsg':
+				var resultsMsg = msg.a;
+				var _v7 = A2($author$project$ResultsPage$update, resultsMsg, model);
+				var newModel = _v7.a;
+				var newMsg = _v7.b;
+				return _Utils_Tuple2(
+					newModel,
+					A2($elm$core$Platform$Cmd$map, $author$project$Main$ResultsPageMsg, newMsg));
 			default:
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
@@ -12128,7 +12183,7 @@ var $mdgriffith$elm_ui$Element$rgb255 = F3(
 	function (red, green, blue) {
 		return A4($mdgriffith$elm_ui$Internal$Model$Rgba, red / 255, green / 255, blue / 255, 1);
 	});
-var $author$project$Main$black = A3($mdgriffith$elm_ui$Element$rgb255, 0, 0, 0);
+var $author$project$Palett$black = A3($mdgriffith$elm_ui$Element$rgb255, 0, 0, 0);
 var $mdgriffith$elm_ui$Internal$Model$Colored = F3(
 	function (a, b, c) {
 		return {$: 'Colored', a: a, b: b, c: c};
@@ -17745,28 +17800,60 @@ var $mdgriffith$elm_ui$Element$layoutWith = F3(
 	});
 var $mdgriffith$elm_ui$Element$layout = $mdgriffith$elm_ui$Element$layoutWith(
 	{options: _List_Nil});
-var $author$project$Main$percent = F2(
+var $mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
+var $mdgriffith$elm_ui$Internal$Model$Text = function (a) {
+	return {$: 'Text', a: a};
+};
+var $mdgriffith$elm_ui$Internal$Model$map = F2(
+	function (fn, el) {
+		switch (el.$) {
+			case 'Styled':
+				var styled = el.a;
+				return $mdgriffith$elm_ui$Internal$Model$Styled(
+					{
+						html: F2(
+							function (add, context) {
+								return A2(
+									$elm$virtual_dom$VirtualDom$map,
+									fn,
+									A2(styled.html, add, context));
+							}),
+						styles: styled.styles
+					});
+			case 'Unstyled':
+				var html = el.a;
+				return $mdgriffith$elm_ui$Internal$Model$Unstyled(
+					A2(
+						$elm$core$Basics$composeL,
+						$elm$virtual_dom$VirtualDom$map(fn),
+						html));
+			case 'Text':
+				var str = el.a;
+				return $mdgriffith$elm_ui$Internal$Model$Text(str);
+			default:
+				return $mdgriffith$elm_ui$Internal$Model$Empty;
+		}
+	});
+var $mdgriffith$elm_ui$Element$map = $mdgriffith$elm_ui$Internal$Model$map;
+var $author$project$Palett$percent = F2(
 	function (perc, num) {
 		return $elm$core$Basics$round((perc * num) / 100);
 	});
-var $author$project$Main$setWindowHeightPc = F2(
+var $author$project$Palett$setWindowHeightPc = F2(
 	function (perc, window) {
 		var height = window.height;
 		return _Utils_update(
 			window,
 			{
-				height: A2($author$project$Main$percent, perc, height)
+				height: A2($author$project$Palett$percent, perc, height)
 			});
 	});
-var $author$project$Main$setWindowHeightPx = F2(
+var $author$project$Palett$setWindowHeightPx = F2(
 	function (size, window) {
 		return _Utils_update(
 			window,
 			{height: size});
 	});
-var $mdgriffith$elm_ui$Internal$Model$Text = function (a) {
-	return {$: 'Text', a: a};
-};
 var $mdgriffith$elm_ui$Element$text = function (content) {
 	return $mdgriffith$elm_ui$Internal$Model$Text(content);
 };
@@ -17866,14 +17953,14 @@ var $mdgriffith$elm_ui$Element$Font$size = function (i) {
 		$mdgriffith$elm_ui$Internal$Flag$fontSize,
 		$mdgriffith$elm_ui$Internal$Model$FontSize(i));
 };
-var $author$project$Main$white = A3($mdgriffith$elm_ui$Element$rgb255, 255, 255, 255);
+var $author$project$Palett$white = A3($mdgriffith$elm_ui$Element$rgb255, 255, 255, 255);
 var $author$project$Main$viewFooter = function (footerSize) {
 	return A2(
 		$mdgriffith$elm_ui$Element$paragraph,
 		_List_fromArray(
 			[
 				$mdgriffith$elm_ui$Element$Font$center,
-				$mdgriffith$elm_ui$Element$Font$color($author$project$Main$white),
+				$mdgriffith$elm_ui$Element$Font$color($author$project$Palett$white),
 				$mdgriffith$elm_ui$Element$Font$size(footerSize.height),
 				A2($mdgriffith$elm_ui$Element$paddingXY, 0, 2 * footerSize.height),
 				$mdgriffith$elm_ui$Element$alignBottom,
@@ -17898,16 +17985,16 @@ var $mdgriffith$elm_ui$Element$padding = function (x) {
 			x,
 			x));
 };
-var $author$project$Main$setWindowWidthPc = F2(
+var $author$project$Palett$setWindowWidthPc = F2(
 	function (perc, window) {
 		var width = window.width;
 		return _Utils_update(
 			window,
 			{
-				width: A2($author$project$Main$percent, perc, width)
+				width: A2($author$project$Palett$percent, perc, width)
 			});
 	});
-var $author$project$Main$setWindowWidthPx = F2(
+var $author$project$Palett$setWindowWidthPx = F2(
 	function (size, window) {
 		return _Utils_update(
 			window,
@@ -18036,37 +18123,6 @@ var $mdgriffith$elm_ui$Internal$Model$TransformComponent = F2(
 	function (a, b) {
 		return {$: 'TransformComponent', a: a, b: b};
 	});
-var $mdgriffith$elm_ui$Internal$Model$Empty = {$: 'Empty'};
-var $mdgriffith$elm_ui$Internal$Model$map = F2(
-	function (fn, el) {
-		switch (el.$) {
-			case 'Styled':
-				var styled = el.a;
-				return $mdgriffith$elm_ui$Internal$Model$Styled(
-					{
-						html: F2(
-							function (add, context) {
-								return A2(
-									$elm$virtual_dom$VirtualDom$map,
-									fn,
-									A2(styled.html, add, context));
-							}),
-						styles: styled.styles
-					});
-			case 'Unstyled':
-				var html = el.a;
-				return $mdgriffith$elm_ui$Internal$Model$Unstyled(
-					A2(
-						$elm$core$Basics$composeL,
-						$elm$virtual_dom$VirtualDom$map(fn),
-						html));
-			case 'Text':
-				var str = el.a;
-				return $mdgriffith$elm_ui$Internal$Model$Text(str);
-			default:
-				return $mdgriffith$elm_ui$Internal$Model$Empty;
-		}
-	});
 var $elm$virtual_dom$VirtualDom$mapAttribute = _VirtualDom_mapAttribute;
 var $mdgriffith$elm_ui$Internal$Model$mapAttrFromStyle = F2(
 	function (fn, attr) {
@@ -18183,13 +18239,13 @@ var $mdgriffith$elm_ui$Element$Border$shadow = function (almostShade) {
 			'box-shadow',
 			$mdgriffith$elm_ui$Internal$Model$formatBoxShadow(shade)));
 };
-var $author$project$Main$noFocusShadow = $mdgriffith$elm_ui$Element$focused(
+var $author$project$Palett$noFocusShadow = $mdgriffith$elm_ui$Element$focused(
 	_List_fromArray(
 		[
 			$mdgriffith$elm_ui$Element$Border$shadow(
 			{
 				blur: 0,
-				color: $author$project$Main$white,
+				color: $author$project$Palett$white,
 				offset: _Utils_Tuple2(0, 0),
 				size: 0
 			})
@@ -19101,15 +19157,15 @@ var $mdgriffith$elm_ui$Element$Background$uncropped = function (src) {
 };
 var $author$project$Main$viewSearchBar = F2(
 	function (searchBarSize, searchBarContent) {
-		var fontSize = A2($author$project$Main$percent, 60, searchBarSize.height);
+		var fontSize = A2($author$project$Palett$percent, 60, searchBarSize.height);
 		return A2(
 			$mdgriffith$elm_ui$Element$row,
 			_List_fromArray(
 				[
 					$mdgriffith$elm_ui$Element$centerX,
-					$mdgriffith$elm_ui$Element$Background$color($author$project$Main$white),
+					$mdgriffith$elm_ui$Element$Background$color($author$project$Palett$white),
 					$mdgriffith$elm_ui$Element$Border$rounded(
-					A2($author$project$Main$percent, 50, searchBarSize.height)),
+					A2($author$project$Palett$percent, 50, searchBarSize.height)),
 					$mdgriffith$elm_ui$Element$width(
 					$mdgriffith$elm_ui$Element$px(searchBarSize.width)),
 					$mdgriffith$elm_ui$Element$height(
@@ -19117,8 +19173,8 @@ var $author$project$Main$viewSearchBar = F2(
 					$mdgriffith$elm_ui$Element$paddingEach(
 					{
 						bottom: 0,
-						left: A2($author$project$Main$percent, 25, searchBarSize.height),
-						right: A2($author$project$Main$percent, 50, searchBarSize.height),
+						left: A2($author$project$Palett$percent, 25, searchBarSize.height),
+						right: A2($author$project$Palett$percent, 50, searchBarSize.height),
 						top: 0
 					})
 				]),
@@ -19131,19 +19187,19 @@ var $author$project$Main$viewSearchBar = F2(
 							$mdgriffith$elm_ui$Element$Background$uncropped('Images/search_icon.png'),
 							$mdgriffith$elm_ui$Element$width(
 							$mdgriffith$elm_ui$Element$px(
-								A2($author$project$Main$percent, 80, searchBarSize.height))),
+								A2($author$project$Palett$percent, 80, searchBarSize.height))),
 							$mdgriffith$elm_ui$Element$height(
 							$mdgriffith$elm_ui$Element$px(
-								A2($author$project$Main$percent, 80, searchBarSize.height)))
+								A2($author$project$Palett$percent, 80, searchBarSize.height)))
 						]),
 					$mdgriffith$elm_ui$Element$none),
 					A2(
 					$mdgriffith$elm_ui$Element$Input$search,
 					_List_fromArray(
 						[
-							$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
+							$mdgriffith$elm_ui$Element$Font$color($author$project$Palett$black),
 							$mdgriffith$elm_ui$Element$Font$size(fontSize),
-							$author$project$Main$noFocusShadow,
+							$author$project$Palett$noFocusShadow,
 							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 							$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
 							$mdgriffith$elm_ui$Element$padding(((searchBarSize.height - fontSize) / 2) | 0),
@@ -19265,7 +19321,7 @@ var $mdgriffith$elm_ui$Element$Input$button = F2(
 				_List_fromArray(
 					[label])));
 	});
-var $author$project$Main$green = A3($mdgriffith$elm_ui$Element$rgb255, 0, 204, 204);
+var $author$project$Palett$green = A3($mdgriffith$elm_ui$Element$rgb255, 0, 204, 204);
 var $mdgriffith$elm_ui$Element$moveDown = function (y) {
 	return A2(
 		$mdgriffith$elm_ui$Internal$Model$TransformComponent,
@@ -19283,25 +19339,25 @@ var $mdgriffith$elm_ui$Element$moveRight = function (x) {
 		$mdgriffith$elm_ui$Internal$Model$MoveX(x));
 };
 var $author$project$Main$viewSearchButton = function (searchButtonSize) {
-	var offset = A2($author$project$Main$percent, 6, searchButtonSize.height);
+	var offset = A2($author$project$Palett$percent, 6, searchButtonSize.height);
 	return A2(
 		$mdgriffith$elm_ui$Element$Input$button,
 		_List_fromArray(
 			[
 				$mdgriffith$elm_ui$Element$Border$rounded(
-				A2($author$project$Main$percent, 50, searchButtonSize.height)),
+				A2($author$project$Palett$percent, 50, searchButtonSize.height)),
 				$mdgriffith$elm_ui$Element$width(
 				$mdgriffith$elm_ui$Element$px(searchButtonSize.width)),
 				$mdgriffith$elm_ui$Element$height(
 				$mdgriffith$elm_ui$Element$px(searchButtonSize.height)),
-				$mdgriffith$elm_ui$Element$Background$color($author$project$Main$green),
+				$mdgriffith$elm_ui$Element$Background$color($author$project$Palett$green),
 				$mdgriffith$elm_ui$Element$centerX,
 				$mdgriffith$elm_ui$Element$Font$center,
 				$mdgriffith$elm_ui$Element$Font$size(
-				A2($author$project$Main$percent, 50, searchButtonSize.height)),
-				$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
+				A2($author$project$Palett$percent, 50, searchButtonSize.height)),
+				$mdgriffith$elm_ui$Element$Font$color($author$project$Palett$black),
 				$mdgriffith$elm_ui$Element$Font$bold,
-				$author$project$Main$noFocusShadow,
+				$author$project$Palett$noFocusShadow,
 				$mdgriffith$elm_ui$Element$Border$shadow(
 				{
 					blur: 0,
@@ -19317,7 +19373,7 @@ var $author$project$Main$viewSearchButton = function (searchButtonSize) {
 						$mdgriffith$elm_ui$Element$Border$shadow(
 						{
 							blur: 0,
-							color: $author$project$Main$green,
+							color: $author$project$Palett$green,
 							offset: _Utils_Tuple2(0, 0),
 							size: 0
 						})
@@ -19337,9 +19393,9 @@ var $author$project$Main$viewHomePage = F3(
 					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 					$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
 					$mdgriffith$elm_ui$Element$spacing(
-					A2($author$project$Main$percent, 5, homePageSize.width)),
+					A2($author$project$Palett$percent, 5, homePageSize.width)),
 					$mdgriffith$elm_ui$Element$padding(
-					A2($author$project$Main$percent, 5, homePageSize.width)),
+					A2($author$project$Palett$percent, 5, homePageSize.width)),
 					$mdgriffith$elm_ui$Element$Region$mainContent
 				]),
 			_List_fromArray(
@@ -19349,11 +19405,11 @@ var $author$project$Main$viewHomePage = F3(
 						var _v0 = device._class;
 						switch (_v0.$) {
 							case 'Phone':
-								return A2($author$project$Main$setWindowWidthPc, 90, homePageSize);
+								return A2($author$project$Palett$setWindowWidthPc, 90, homePageSize);
 							case 'Tablet':
-								return A2($author$project$Main$setWindowWidthPc, 75, homePageSize);
+								return A2($author$project$Palett$setWindowWidthPc, 75, homePageSize);
 							default:
-								return A2($author$project$Main$setWindowWidthPc, 60, homePageSize);
+								return A2($author$project$Palett$setWindowWidthPc, 60, homePageSize);
 						}
 					}();
 					return $author$project$Main$viewHeader(headerSize);
@@ -19363,19 +19419,19 @@ var $author$project$Main$viewHomePage = F3(
 						var _v1 = device._class;
 						switch (_v1.$) {
 							case 'Phone':
-								return A2($author$project$Main$percent, 80, homePageSize.width);
+								return A2($author$project$Palett$percent, 80, homePageSize.width);
 							case 'Tablet':
-								return A2($author$project$Main$percent, 55, homePageSize.width);
+								return A2($author$project$Palett$percent, 55, homePageSize.width);
 							default:
-								return A2($author$project$Main$percent, 40, homePageSize.width);
+								return A2($author$project$Palett$percent, 40, homePageSize.width);
 						}
 					}();
 					return A2(
 						$author$project$Main$viewSearchBar,
 						A2(
-							$author$project$Main$setWindowHeightPc,
+							$author$project$Palett$setWindowHeightPc,
 							6,
-							A2($author$project$Main$setWindowWidthPx, searchBarWidth, homePageSize)),
+							A2($author$project$Palett$setWindowWidthPx, searchBarWidth, homePageSize)),
 						searchBarContent);
 				}(),
 					function () {
@@ -19383,32 +19439,24 @@ var $author$project$Main$viewHomePage = F3(
 						var _v2 = device._class;
 						switch (_v2.$) {
 							case 'Phone':
-								return A2($author$project$Main$percent, 30, homePageSize.width);
+								return A2($author$project$Palett$percent, 30, homePageSize.width);
 							case 'Tablet':
-								return A2($author$project$Main$percent, 20, homePageSize.width);
+								return A2($author$project$Palett$percent, 20, homePageSize.width);
 							default:
-								return A2($author$project$Main$percent, 15, homePageSize.width);
+								return A2($author$project$Palett$percent, 15, homePageSize.width);
 						}
 					}();
 					return $author$project$Main$viewSearchButton(
 						A2(
-							$author$project$Main$setWindowHeightPc,
+							$author$project$Palett$setWindowHeightPc,
 							5,
-							A2($author$project$Main$setWindowWidthPx, searchButtonWidth, homePageSize)));
+							A2($author$project$Palett$setWindowWidthPx, searchButtonWidth, homePageSize)));
 				}()
 				]));
 	});
 var $mdgriffith$elm_ui$Internal$Model$Left = {$: 'Left'};
 var $mdgriffith$elm_ui$Element$alignLeft = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Left);
-var $author$project$Main$getCurrentPage = function (route) {
-	if (route.$ === 'SearchResultsPage') {
-		var parameters = route.a;
-		return parameters.page;
-	} else {
-		return $elm$core$Maybe$Nothing;
-	}
-};
-var $author$project$Main$grey = A3($mdgriffith$elm_ui$Element$rgb255, 105, 105, 105);
+var $author$project$Palett$grey = A3($mdgriffith$elm_ui$Element$rgb255, 105, 105, 105);
 var $mdgriffith$elm_ui$Element$Border$roundEach = function (_v0) {
 	var topLeft = _v0.topLeft;
 	var topRight = _v0.topRight;
@@ -19423,8 +19471,668 @@ var $mdgriffith$elm_ui$Element$Border$roundEach = function (_v0) {
 			'border-radius',
 			$elm$core$String$fromInt(topLeft) + ('px ' + ($elm$core$String$fromInt(topRight) + ('px ' + ($elm$core$String$fromInt(bottomRight) + ('px ' + ($elm$core$String$fromInt(bottomLeft) + 'px'))))))));
 };
+var $author$project$ResultsPage$ShowCharacterInfo = function (a) {
+	return {$: 'ShowCharacterInfo', a: a};
+};
 var $mdgriffith$elm_ui$Internal$Model$Top = {$: 'Top'};
 var $mdgriffith$elm_ui$Element$alignTop = $mdgriffith$elm_ui$Internal$Model$AlignY($mdgriffith$elm_ui$Internal$Model$Top);
+var $mdgriffith$elm_ui$Internal$Model$Hover = {$: 'Hover'};
+var $mdgriffith$elm_ui$Internal$Flag$hover = $mdgriffith$elm_ui$Internal$Flag$flag(33);
+var $mdgriffith$elm_ui$Element$mouseOver = function (decs) {
+	return A2(
+		$mdgriffith$elm_ui$Internal$Model$StyleClass,
+		$mdgriffith$elm_ui$Internal$Flag$hover,
+		A2(
+			$mdgriffith$elm_ui$Internal$Model$PseudoSelector,
+			$mdgriffith$elm_ui$Internal$Model$Hover,
+			$mdgriffith$elm_ui$Internal$Model$unwrapDecorations(decs)));
+};
+var $author$project$ResultsPage$statusToString = function (status) {
+	switch (status.$) {
+		case 'Alive':
+			return 'Alive';
+		case 'Dead':
+			return 'Dead';
+		case 'Unknown':
+			return 'unknown';
+		default:
+			return 'Invalid status';
+	}
+};
+var $author$project$ResultsPage$viewCharacterInfo = F3(
+	function (infoSize, index, character) {
+		var viewSpecies = F2(
+			function (species, subType) {
+				if (subType === '') {
+					return species;
+				} else {
+					return species + (' - ' + subType);
+				}
+			});
+		var mainFontSize = A2($author$project$Palett$percent, 15, infoSize.height);
+		var subInfo = F2(
+			function (title, value) {
+				return A2(
+					$mdgriffith$elm_ui$Element$column,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$spacing(
+							A2($author$project$Palett$percent, 2, infoSize.height))
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$mdgriffith$elm_ui$Element$paragraph,
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Element$Font$size(
+									A2($author$project$Palett$percent, 55, mainFontSize)),
+									$mdgriffith$elm_ui$Element$Font$color(
+									A3($mdgriffith$elm_ui$Element$rgb255, 211, 211, 211)),
+									$mdgriffith$elm_ui$Element$Region$heading(2)
+								]),
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Element$text(title)
+								])),
+							A2(
+							$mdgriffith$elm_ui$Element$paragraph,
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Element$Region$heading(3),
+									$mdgriffith$elm_ui$Element$Font$size(
+									A2($author$project$Palett$percent, 70, mainFontSize))
+								]),
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Element$text(value)
+								]))
+						]));
+			});
+		return A2(
+			$mdgriffith$elm_ui$Element$column,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$padding(
+					A2($author$project$Palett$percent, 5, infoSize.height)),
+					$mdgriffith$elm_ui$Element$spacing(
+					A2($author$project$Palett$percent, 10, infoSize.height)),
+					$mdgriffith$elm_ui$Element$alignTop
+				]),
+			_List_fromArray(
+				[
+					A2(
+					$mdgriffith$elm_ui$Element$paragraph,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$width(
+							$mdgriffith$elm_ui$Element$px(
+								A2($author$project$Palett$percent, 90, infoSize.width)))
+						]),
+					_List_fromArray(
+						[
+							A2(
+							$mdgriffith$elm_ui$Element$Input$button,
+							_List_fromArray(
+								[
+									$mdgriffith$elm_ui$Element$Font$bold,
+									$mdgriffith$elm_ui$Element$Font$size(mainFontSize),
+									$mdgriffith$elm_ui$Element$mouseOver(
+									_List_fromArray(
+										[
+											$mdgriffith$elm_ui$Element$Font$color($author$project$Palett$green)
+										])),
+									$author$project$Palett$noFocusShadow,
+									$mdgriffith$elm_ui$Element$Region$heading(1)
+								]),
+							{
+								label: $mdgriffith$elm_ui$Element$text(character.name),
+								onPress: $elm$core$Maybe$Just(
+									$author$project$ResultsPage$ShowCharacterInfo(character))
+							})
+						])),
+					A2(
+					subInfo,
+					'Status:',
+					$author$project$ResultsPage$statusToString(character.status)),
+					A2(
+					subInfo,
+					'Species:',
+					A2(viewSpecies, character.species, character.subType))
+				]));
+	});
+var $author$project$ResultsPage$viewCharacterResultHorizontal = F3(
+	function (resultSize, index, character) {
+		var resultHeight = 0;
+		return A2(
+			$mdgriffith$elm_ui$Element$row,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$Background$color($author$project$Palett$grey),
+					$mdgriffith$elm_ui$Element$height(
+					$mdgriffith$elm_ui$Element$px(resultSize.height)),
+					$mdgriffith$elm_ui$Element$width(
+					$mdgriffith$elm_ui$Element$px(resultSize.width)),
+					$mdgriffith$elm_ui$Element$Border$rounded(20),
+					$mdgriffith$elm_ui$Element$centerX
+				]),
+			_Utils_ap(
+				_List_fromArray(
+					[
+						A2(
+						$mdgriffith$elm_ui$Element$el,
+						_List_fromArray(
+							[
+								$mdgriffith$elm_ui$Element$height(
+								$mdgriffith$elm_ui$Element$px(resultSize.height)),
+								$mdgriffith$elm_ui$Element$width(
+								$mdgriffith$elm_ui$Element$px(resultSize.height)),
+								$mdgriffith$elm_ui$Element$Border$roundEach(
+								{bottomLeft: 20, bottomRight: 0, topLeft: 20, topRight: 0}),
+								$mdgriffith$elm_ui$Element$Background$uncropped(character.image)
+							]),
+						$mdgriffith$elm_ui$Element$none)
+					]),
+				_List_fromArray(
+					[
+						A3(
+						$author$project$ResultsPage$viewCharacterInfo,
+						A2($author$project$Palett$setWindowWidthPx, resultSize.width - resultSize.height, resultSize),
+						index,
+						character)
+					])));
+	});
+var $author$project$ResultsPage$viewCharacterResultVertical = F3(
+	function (resultWidth, index, character) {
+		return A2(
+			$mdgriffith$elm_ui$Element$column,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$Background$color($author$project$Palett$grey),
+					$mdgriffith$elm_ui$Element$width(
+					$mdgriffith$elm_ui$Element$px(resultWidth)),
+					$mdgriffith$elm_ui$Element$Border$rounded(20),
+					$mdgriffith$elm_ui$Element$centerX
+				]),
+			_Utils_ap(
+				_List_fromArray(
+					[
+						A2(
+						$mdgriffith$elm_ui$Element$el,
+						_List_fromArray(
+							[
+								$mdgriffith$elm_ui$Element$height(
+								$mdgriffith$elm_ui$Element$px(resultWidth)),
+								$mdgriffith$elm_ui$Element$width(
+								$mdgriffith$elm_ui$Element$px(resultWidth)),
+								$mdgriffith$elm_ui$Element$Border$roundEach(
+								{bottomLeft: 0, bottomRight: 0, topLeft: 20, topRight: 20}),
+								$mdgriffith$elm_ui$Element$Background$uncropped(character.image)
+							]),
+						$mdgriffith$elm_ui$Element$none)
+					]),
+				_List_fromArray(
+					[
+						A3(
+						$author$project$ResultsPage$viewCharacterInfo,
+						{height: resultWidth, width: resultWidth},
+						index,
+						character)
+					])));
+	});
+var $author$project$ResultsPage$GoToResultsPage = function (a) {
+	return {$: 'GoToResultsPage', a: a};
+};
+var $author$project$ResultsPage$Next = {$: 'Next'};
+var $author$project$ResultsPage$PageNum = function (a) {
+	return {$: 'PageNum', a: a};
+};
+var $author$project$ResultsPage$Prev = {$: 'Prev'};
+var $mdgriffith$elm_ui$Internal$Model$Navigation = {$: 'Navigation'};
+var $mdgriffith$elm_ui$Element$Region$navigation = $mdgriffith$elm_ui$Internal$Model$Describe($mdgriffith$elm_ui$Internal$Model$Navigation);
+var $mdgriffith$elm_ui$Internal$Model$Padding = F5(
+	function (a, b, c, d, e) {
+		return {$: 'Padding', a: a, b: b, c: c, d: d, e: e};
+	});
+var $mdgriffith$elm_ui$Internal$Model$Spaced = F3(
+	function (a, b, c) {
+		return {$: 'Spaced', a: a, b: b, c: c};
+	});
+var $mdgriffith$elm_ui$Internal$Model$extractSpacingAndPadding = function (attrs) {
+	return A3(
+		$elm$core$List$foldr,
+		F2(
+			function (attr, _v0) {
+				var pad = _v0.a;
+				var spacing = _v0.b;
+				return _Utils_Tuple2(
+					function () {
+						if (pad.$ === 'Just') {
+							var x = pad.a;
+							return pad;
+						} else {
+							if ((attr.$ === 'StyleClass') && (attr.b.$ === 'PaddingStyle')) {
+								var _v3 = attr.b;
+								var name = _v3.a;
+								var t = _v3.b;
+								var r = _v3.c;
+								var b = _v3.d;
+								var l = _v3.e;
+								return $elm$core$Maybe$Just(
+									A5($mdgriffith$elm_ui$Internal$Model$Padding, name, t, r, b, l));
+							} else {
+								return $elm$core$Maybe$Nothing;
+							}
+						}
+					}(),
+					function () {
+						if (spacing.$ === 'Just') {
+							var x = spacing.a;
+							return spacing;
+						} else {
+							if ((attr.$ === 'StyleClass') && (attr.b.$ === 'SpacingStyle')) {
+								var _v6 = attr.b;
+								var name = _v6.a;
+								var x = _v6.b;
+								var y = _v6.c;
+								return $elm$core$Maybe$Just(
+									A3($mdgriffith$elm_ui$Internal$Model$Spaced, name, x, y));
+							} else {
+								return $elm$core$Maybe$Nothing;
+							}
+						}
+					}());
+			}),
+		_Utils_Tuple2($elm$core$Maybe$Nothing, $elm$core$Maybe$Nothing),
+		attrs);
+};
+var $mdgriffith$elm_ui$Element$wrappedRow = F2(
+	function (attrs, children) {
+		var _v0 = $mdgriffith$elm_ui$Internal$Model$extractSpacingAndPadding(attrs);
+		var padded = _v0.a;
+		var spaced = _v0.b;
+		if (spaced.$ === 'Nothing') {
+			return A4(
+				$mdgriffith$elm_ui$Internal$Model$element,
+				$mdgriffith$elm_ui$Internal$Model$asRow,
+				$mdgriffith$elm_ui$Internal$Model$div,
+				A2(
+					$elm$core$List$cons,
+					$mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.contentLeft + (' ' + ($mdgriffith$elm_ui$Internal$Style$classes.contentCenterY + (' ' + $mdgriffith$elm_ui$Internal$Style$classes.wrapped)))),
+					A2(
+						$elm$core$List$cons,
+						$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$shrink),
+						A2(
+							$elm$core$List$cons,
+							$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$shrink),
+							attrs))),
+				$mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
+		} else {
+			var _v2 = spaced.a;
+			var spaceName = _v2.a;
+			var x = _v2.b;
+			var y = _v2.c;
+			var newPadding = function () {
+				if (padded.$ === 'Just') {
+					var _v5 = padded.a;
+					var name = _v5.a;
+					var t = _v5.b;
+					var r = _v5.c;
+					var b = _v5.d;
+					var l = _v5.e;
+					return ((_Utils_cmp(r, (x / 2) | 0) > -1) && (_Utils_cmp(b, (y / 2) | 0) > -1)) ? $elm$core$Maybe$Just(
+						$mdgriffith$elm_ui$Element$paddingEach(
+							{bottom: b - ((y / 2) | 0), left: l - ((x / 2) | 0), right: r - ((x / 2) | 0), top: t - ((y / 2) | 0)})) : $elm$core$Maybe$Nothing;
+				} else {
+					return $elm$core$Maybe$Nothing;
+				}
+			}();
+			if (newPadding.$ === 'Just') {
+				var pad = newPadding.a;
+				return A4(
+					$mdgriffith$elm_ui$Internal$Model$element,
+					$mdgriffith$elm_ui$Internal$Model$asRow,
+					$mdgriffith$elm_ui$Internal$Model$div,
+					A2(
+						$elm$core$List$cons,
+						$mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.contentLeft + (' ' + ($mdgriffith$elm_ui$Internal$Style$classes.contentCenterY + (' ' + $mdgriffith$elm_ui$Internal$Style$classes.wrapped)))),
+						A2(
+							$elm$core$List$cons,
+							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$shrink),
+							A2(
+								$elm$core$List$cons,
+								$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$shrink),
+								_Utils_ap(
+									attrs,
+									_List_fromArray(
+										[pad]))))),
+					$mdgriffith$elm_ui$Internal$Model$Unkeyed(children));
+			} else {
+				var halfY = -(y / 2);
+				var halfX = -(x / 2);
+				return A4(
+					$mdgriffith$elm_ui$Internal$Model$element,
+					$mdgriffith$elm_ui$Internal$Model$asEl,
+					$mdgriffith$elm_ui$Internal$Model$div,
+					attrs,
+					$mdgriffith$elm_ui$Internal$Model$Unkeyed(
+						_List_fromArray(
+							[
+								A4(
+								$mdgriffith$elm_ui$Internal$Model$element,
+								$mdgriffith$elm_ui$Internal$Model$asRow,
+								$mdgriffith$elm_ui$Internal$Model$div,
+								A2(
+									$elm$core$List$cons,
+									$mdgriffith$elm_ui$Internal$Model$htmlClass($mdgriffith$elm_ui$Internal$Style$classes.contentLeft + (' ' + ($mdgriffith$elm_ui$Internal$Style$classes.contentCenterY + (' ' + $mdgriffith$elm_ui$Internal$Style$classes.wrapped)))),
+									A2(
+										$elm$core$List$cons,
+										$mdgriffith$elm_ui$Internal$Model$Attr(
+											A2(
+												$elm$html$Html$Attributes$style,
+												'margin',
+												$elm$core$String$fromFloat(halfY) + ('px' + (' ' + ($elm$core$String$fromFloat(halfX) + 'px'))))),
+										A2(
+											$elm$core$List$cons,
+											$mdgriffith$elm_ui$Internal$Model$Attr(
+												A2(
+													$elm$html$Html$Attributes$style,
+													'width',
+													'calc(100% + ' + ($elm$core$String$fromInt(x) + 'px)'))),
+											A2(
+												$elm$core$List$cons,
+												$mdgriffith$elm_ui$Internal$Model$Attr(
+													A2(
+														$elm$html$Html$Attributes$style,
+														'height',
+														'calc(100% + ' + ($elm$core$String$fromInt(y) + 'px)'))),
+												A2(
+													$elm$core$List$cons,
+													A2(
+														$mdgriffith$elm_ui$Internal$Model$StyleClass,
+														$mdgriffith$elm_ui$Internal$Flag$spacing,
+														A3($mdgriffith$elm_ui$Internal$Model$SpacingStyle, spaceName, x, y)),
+													_List_Nil))))),
+								$mdgriffith$elm_ui$Internal$Model$Unkeyed(children))
+							])));
+			}
+		}
+	});
+var $author$project$ResultsPage$viewPageNavigation = F4(
+	function (navigationHeight, currentPageArg, info, device) {
+		var prevNextAttribute = _List_fromArray(
+			[
+				$mdgriffith$elm_ui$Element$Background$color($author$project$Palett$green),
+				$mdgriffith$elm_ui$Element$Border$rounded(
+				A2($author$project$Palett$percent, 30, navigationHeight)),
+				$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
+				$mdgriffith$elm_ui$Element$Font$size(
+				A2($author$project$Palett$percent, 70, navigationHeight)),
+				A2(
+				$mdgriffith$elm_ui$Element$paddingXY,
+				A2($author$project$Palett$percent, 20, navigationHeight),
+				0),
+				$mdgriffith$elm_ui$Element$Font$color($author$project$Palett$black),
+				$mdgriffith$elm_ui$Element$Font$center,
+				$author$project$Palett$noFocusShadow
+			]);
+		var prevButton = function () {
+			var _v4 = info.prev;
+			if (_v4.$ === 'Nothing') {
+				return $mdgriffith$elm_ui$Element$none;
+			} else {
+				return A2(
+					$mdgriffith$elm_ui$Element$Input$button,
+					prevNextAttribute,
+					{
+						label: $mdgriffith$elm_ui$Element$text('Prev'),
+						onPress: $elm$core$Maybe$Just(
+							$author$project$ResultsPage$GoToResultsPage($author$project$ResultsPage$Prev))
+					});
+			}
+		}();
+		var pageNumberButton = function (num) {
+			return A2(
+				$mdgriffith$elm_ui$Element$Input$button,
+				prevNextAttribute,
+				{
+					label: $mdgriffith$elm_ui$Element$text(
+						$elm$core$String$fromInt(num)),
+					onPress: $elm$core$Maybe$Just(
+						$author$project$ResultsPage$GoToResultsPage(
+							$author$project$ResultsPage$PageNum(num)))
+				});
+		};
+		var nextButton = function () {
+			var _v3 = info.next;
+			if (_v3.$ === 'Nothing') {
+				return $mdgriffith$elm_ui$Element$none;
+			} else {
+				return A2(
+					$mdgriffith$elm_ui$Element$Input$button,
+					prevNextAttribute,
+					{
+						label: $mdgriffith$elm_ui$Element$text('Next'),
+						onPress: $elm$core$Maybe$Just(
+							$author$project$ResultsPage$GoToResultsPage($author$project$ResultsPage$Next))
+					});
+			}
+		}();
+		var currentPageRadius = function () {
+			var _v1 = device._class;
+			if (_v1.$ === 'Phone') {
+				var _v2 = device.orientation;
+				if (_v2.$ === 'Portrait') {
+					return 1;
+				} else {
+					return 2;
+				}
+			} else {
+				return 3;
+			}
+		}();
+		var showThesePageNums = F2(
+			function (pages, currentPage) {
+				if (pages <= 5) {
+					return A2(
+						$elm$core$List$map,
+						pageNumberButton,
+						A2($elm$core$List$range, 1, pages));
+				} else {
+					var upperBound = A2($elm$core$Basics$min, pages, currentPage + currentPageRadius);
+					var lowerBound = A2($elm$core$Basics$max, 1, currentPage - currentPageRadius);
+					return _Utils_ap(
+						_List_fromArray(
+							[
+								(lowerBound > 1) ? $mdgriffith$elm_ui$Element$text('...') : $mdgriffith$elm_ui$Element$none
+							]),
+						_Utils_ap(
+							A2(
+								$elm$core$List$map,
+								pageNumberButton,
+								A2($elm$core$List$range, lowerBound, upperBound)),
+							_List_fromArray(
+								[
+									(_Utils_cmp(upperBound, pages) < 0) ? $mdgriffith$elm_ui$Element$text('...') : $mdgriffith$elm_ui$Element$none
+								])));
+				}
+			});
+		var _v0 = info.pages;
+		if (_v0 === 1) {
+			return $mdgriffith$elm_ui$Element$none;
+		} else {
+			return A2(
+				$mdgriffith$elm_ui$Element$wrappedRow,
+				_List_fromArray(
+					[
+						$mdgriffith$elm_ui$Element$centerX,
+						$mdgriffith$elm_ui$Element$spacing(
+						A2($author$project$Palett$percent, 50, navigationHeight)),
+						$mdgriffith$elm_ui$Element$height(
+						$mdgriffith$elm_ui$Element$px(navigationHeight)),
+						$mdgriffith$elm_ui$Element$Region$navigation
+					]),
+				_Utils_ap(
+					_List_fromArray(
+						[prevButton]),
+					_Utils_ap(
+						A2(showThesePageNums, info.pages, currentPageArg),
+						_List_fromArray(
+							[nextButton]))));
+		}
+	});
+var $author$project$ResultsPage$viewCharacterSearchResults = F4(
+	function (resultsPageSize, device, pageNum, charRequest) {
+		var resultsColumn = F3(
+			function (resultsColwidth, orientation, charList) {
+				return A2(
+					$mdgriffith$elm_ui$Element$column,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$spacing(
+							A2($author$project$Palett$percent, 2, resultsPageSize.height)),
+							$mdgriffith$elm_ui$Element$Region$mainContent
+						]),
+					function () {
+						var resultSize = {
+							height: A2($author$project$Palett$percent, 35, resultsColwidth),
+							width: resultsColwidth
+						};
+						if (orientation.$ === 'Landscape') {
+							return A2(
+								$elm$core$List$indexedMap,
+								$author$project$ResultsPage$viewCharacterResultHorizontal(resultSize),
+								charList);
+						} else {
+							return A2(
+								$elm$core$List$indexedMap,
+								$author$project$ResultsPage$viewCharacterResultVertical(resultSize.width),
+								charList);
+						}
+					}());
+			});
+		var paddingLeft = $mdgriffith$elm_ui$Element$paddingEach(
+			{
+				bottom: 0,
+				left: A2($author$project$Palett$percent, 10, resultsPageSize.width),
+				right: 0,
+				top: A2($author$project$Palett$percent, 5, resultsPageSize.height)
+			});
+		var paddingCenter = $mdgriffith$elm_ui$Element$paddingEach(
+			{
+				bottom: 0,
+				left: 0,
+				right: 0,
+				top: A2($author$project$Palett$percent, 5, resultsPageSize.height)
+			});
+		return A2(
+			$mdgriffith$elm_ui$Element$column,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+					$mdgriffith$elm_ui$Element$spacing(
+					A2($author$project$Palett$percent, 5, resultsPageSize.height))
+				]),
+			_List_fromArray(
+				[
+					function () {
+					var _v0 = device.orientation;
+					if (_v0.$ === 'Landscape') {
+						var _v1 = device._class;
+						if (_v1.$ === 'Phone') {
+							return A2(
+								$mdgriffith$elm_ui$Element$el,
+								_List_fromArray(
+									[$mdgriffith$elm_ui$Element$centerX, paddingCenter]),
+								A3(
+									resultsColumn,
+									A2($author$project$Palett$percent, 80, resultsPageSize.width),
+									$mdgriffith$elm_ui$Element$Landscape,
+									charRequest.results));
+						} else {
+							return A2(
+								$mdgriffith$elm_ui$Element$row,
+								_List_fromArray(
+									[$mdgriffith$elm_ui$Element$alignLeft, paddingLeft]),
+								_List_fromArray(
+									[
+										A3(
+										resultsColumn,
+										A2($author$project$Palett$percent, 35, resultsPageSize.width),
+										$mdgriffith$elm_ui$Element$Landscape,
+										charRequest.results)
+									]));
+						}
+					} else {
+						var _v2 = device._class;
+						switch (_v2.$) {
+							case 'Phone':
+								return A2(
+									$mdgriffith$elm_ui$Element$el,
+									_List_fromArray(
+										[$mdgriffith$elm_ui$Element$centerX, paddingCenter]),
+									A3(
+										resultsColumn,
+										A2($author$project$Palett$percent, 80, resultsPageSize.width),
+										$mdgriffith$elm_ui$Element$Portrait,
+										charRequest.results));
+							case 'Tablet':
+								return A2(
+									$mdgriffith$elm_ui$Element$el,
+									_List_fromArray(
+										[$mdgriffith$elm_ui$Element$centerX, paddingCenter]),
+									A3(
+										resultsColumn,
+										A2($author$project$Palett$percent, 80, resultsPageSize.width),
+										$mdgriffith$elm_ui$Element$Landscape,
+										charRequest.results));
+							default:
+								return A2(
+									$mdgriffith$elm_ui$Element$row,
+									_List_fromArray(
+										[$mdgriffith$elm_ui$Element$alignLeft, paddingLeft]),
+									_List_fromArray(
+										[
+											A3(
+											resultsColumn,
+											A2($author$project$Palett$percent, 35, resultsPageSize.width),
+											$mdgriffith$elm_ui$Element$Landscape,
+											charRequest.results)
+										]));
+						}
+					}
+				}(),
+					A2(
+					$mdgriffith$elm_ui$Element$el,
+					_List_fromArray(
+						[$mdgriffith$elm_ui$Element$centerX]),
+					A4(
+						$author$project$ResultsPage$viewPageNavigation,
+						A2($author$project$Palett$percent, 4, resultsPageSize.height),
+						pageNum,
+						charRequest.info,
+						device))
+				]));
+	});
+var $author$project$ResultsPage$viewResultsPage = F2(
+	function (resultsPageSize, model) {
+		var _v0 = model.searchResult;
+		switch (_v0.$) {
+			case 'Failure':
+				return $mdgriffith$elm_ui$Element$text('Something went wrong');
+			case 'Loading':
+				return $mdgriffith$elm_ui$Element$text('Loading');
+			case 'NoSearchInitiated':
+				return $mdgriffith$elm_ui$Element$text('How did you get here?');
+			case 'CharacterSearch':
+				var charRequest = _v0.a;
+				return A4($author$project$ResultsPage$viewCharacterSearchResults, resultsPageSize, model.device, model.currentPage, charRequest);
+			default:
+				return $mdgriffith$elm_ui$Element$text('This page is not implemented yet');
+		}
+	});
+var $mdgriffith$elm_ui$Internal$Model$Right = {$: 'Right'};
+var $mdgriffith$elm_ui$Element$alignRight = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Right);
 var $elm$html$Html$Attributes$rel = _VirtualDom_attribute('rel');
 var $mdgriffith$elm_ui$Element$link = F2(
 	function (attrs, _v0) {
@@ -19456,327 +20164,6 @@ var $mdgriffith$elm_ui$Element$link = F2(
 				_List_fromArray(
 					[label])));
 	});
-var $mdgriffith$elm_ui$Internal$Model$Hover = {$: 'Hover'};
-var $mdgriffith$elm_ui$Internal$Flag$hover = $mdgriffith$elm_ui$Internal$Flag$flag(33);
-var $mdgriffith$elm_ui$Element$mouseOver = function (decs) {
-	return A2(
-		$mdgriffith$elm_ui$Internal$Model$StyleClass,
-		$mdgriffith$elm_ui$Internal$Flag$hover,
-		A2(
-			$mdgriffith$elm_ui$Internal$Model$PseudoSelector,
-			$mdgriffith$elm_ui$Internal$Model$Hover,
-			$mdgriffith$elm_ui$Internal$Model$unwrapDecorations(decs)));
-};
-var $author$project$Main$statusToString = function (status) {
-	switch (status.$) {
-		case 'Alive':
-			return 'Alive';
-		case 'Dead':
-			return 'Dead';
-		case 'Unknown':
-			return 'unknown';
-		default:
-			return 'Invalid status';
-	}
-};
-var $author$project$Main$viewCharacterInfo = F2(
-	function (infoSize, character) {
-		var viewSpecies = F2(
-			function (species, subType) {
-				if (subType === '') {
-					return species;
-				} else {
-					return species + (' - ' + subType);
-				}
-			});
-		var mainFontSize = A2($author$project$Main$percent, 15, infoSize.height);
-		var subInfo = F2(
-			function (title, value) {
-				return A2(
-					$mdgriffith$elm_ui$Element$column,
-					_List_fromArray(
-						[
-							$mdgriffith$elm_ui$Element$spacing(
-							A2($author$project$Main$percent, 2, infoSize.height))
-						]),
-					_List_fromArray(
-						[
-							A2(
-							$mdgriffith$elm_ui$Element$paragraph,
-							_List_fromArray(
-								[
-									$mdgriffith$elm_ui$Element$Font$size(
-									A2($author$project$Main$percent, 55, mainFontSize)),
-									$mdgriffith$elm_ui$Element$Font$color(
-									A3($mdgriffith$elm_ui$Element$rgb255, 211, 211, 211)),
-									$mdgriffith$elm_ui$Element$Region$heading(2)
-								]),
-							_List_fromArray(
-								[
-									$mdgriffith$elm_ui$Element$text(title)
-								])),
-							A2(
-							$mdgriffith$elm_ui$Element$paragraph,
-							_List_fromArray(
-								[
-									$mdgriffith$elm_ui$Element$Region$heading(3),
-									$mdgriffith$elm_ui$Element$Font$size(
-									A2($author$project$Main$percent, 70, mainFontSize))
-								]),
-							_List_fromArray(
-								[
-									$mdgriffith$elm_ui$Element$text(value)
-								]))
-						]));
-			});
-		return A2(
-			$mdgriffith$elm_ui$Element$column,
-			_List_fromArray(
-				[
-					$mdgriffith$elm_ui$Element$padding(
-					A2($author$project$Main$percent, 5, infoSize.height)),
-					$mdgriffith$elm_ui$Element$spacing(
-					A2($author$project$Main$percent, 10, infoSize.height)),
-					$mdgriffith$elm_ui$Element$alignTop
-				]),
-			_List_fromArray(
-				[
-					A2(
-					$mdgriffith$elm_ui$Element$paragraph,
-					_List_fromArray(
-						[
-							$mdgriffith$elm_ui$Element$width(
-							$mdgriffith$elm_ui$Element$px(
-								A2($author$project$Main$percent, 90, infoSize.width)))
-						]),
-					_List_fromArray(
-						[
-							A2(
-							$mdgriffith$elm_ui$Element$link,
-							_List_fromArray(
-								[
-									$mdgriffith$elm_ui$Element$Font$bold,
-									$mdgriffith$elm_ui$Element$Font$size(mainFontSize),
-									$mdgriffith$elm_ui$Element$mouseOver(
-									_List_fromArray(
-										[
-											$mdgriffith$elm_ui$Element$Font$color($author$project$Main$green)
-										])),
-									$mdgriffith$elm_ui$Element$Region$heading(1)
-								]),
-							{
-								label: $mdgriffith$elm_ui$Element$text(character.name),
-								url: 'character/' + $elm$core$String$fromInt(character.id)
-							})
-						])),
-					A2(
-					subInfo,
-					'Status:',
-					$author$project$Main$statusToString(character.status)),
-					A2(
-					subInfo,
-					'Species:',
-					A2(viewSpecies, character.species, character.subType))
-				]));
-	});
-var $author$project$Main$viewCharacterResultHorizontal = F2(
-	function (resultSize, character) {
-		var resultHeight = 0;
-		return A2(
-			$mdgriffith$elm_ui$Element$row,
-			_List_fromArray(
-				[
-					$mdgriffith$elm_ui$Element$Background$color($author$project$Main$grey),
-					$mdgriffith$elm_ui$Element$height(
-					$mdgriffith$elm_ui$Element$px(resultSize.height)),
-					$mdgriffith$elm_ui$Element$width(
-					$mdgriffith$elm_ui$Element$px(resultSize.width)),
-					$mdgriffith$elm_ui$Element$Border$rounded(20),
-					$mdgriffith$elm_ui$Element$centerX
-				]),
-			_Utils_ap(
-				_List_fromArray(
-					[
-						A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_fromArray(
-							[
-								$mdgriffith$elm_ui$Element$height(
-								$mdgriffith$elm_ui$Element$px(resultSize.height)),
-								$mdgriffith$elm_ui$Element$width(
-								$mdgriffith$elm_ui$Element$px(resultSize.height)),
-								$mdgriffith$elm_ui$Element$Border$roundEach(
-								{bottomLeft: 20, bottomRight: 0, topLeft: 20, topRight: 0}),
-								$mdgriffith$elm_ui$Element$Background$uncropped(character.image)
-							]),
-						$mdgriffith$elm_ui$Element$none)
-					]),
-				_List_fromArray(
-					[
-						A2(
-						$author$project$Main$viewCharacterInfo,
-						A2($author$project$Main$setWindowWidthPx, resultSize.width - resultSize.height, resultSize),
-						character)
-					])));
-	});
-var $author$project$Main$viewCharacterResultVertical = F2(
-	function (resultWidth, character) {
-		return A2(
-			$mdgriffith$elm_ui$Element$column,
-			_List_fromArray(
-				[
-					$mdgriffith$elm_ui$Element$Background$color($author$project$Main$grey),
-					$mdgriffith$elm_ui$Element$width(
-					$mdgriffith$elm_ui$Element$px(resultWidth)),
-					$mdgriffith$elm_ui$Element$Border$rounded(20),
-					$mdgriffith$elm_ui$Element$centerX
-				]),
-			_List_fromArray(
-				[
-					A2(
-					$mdgriffith$elm_ui$Element$el,
-					_List_fromArray(
-						[
-							$mdgriffith$elm_ui$Element$height(
-							$mdgriffith$elm_ui$Element$px(resultWidth)),
-							$mdgriffith$elm_ui$Element$width(
-							$mdgriffith$elm_ui$Element$px(resultWidth)),
-							$mdgriffith$elm_ui$Element$Border$roundEach(
-							{bottomLeft: 0, bottomRight: 0, topLeft: 20, topRight: 20}),
-							$mdgriffith$elm_ui$Element$Background$uncropped(character.image)
-						]),
-					$mdgriffith$elm_ui$Element$none)
-				]));
-	});
-var $author$project$Main$viewResultsPage = F2(
-	function (resultsPageSize, model) {
-		var resultsColumn = F3(
-			function (resultsColwidth, orientation, charList) {
-				return A2(
-					$mdgriffith$elm_ui$Element$column,
-					_List_fromArray(
-						[
-							$mdgriffith$elm_ui$Element$spacing(
-							A2($author$project$Main$percent, 2, resultsPageSize.height)),
-							$mdgriffith$elm_ui$Element$Region$mainContent
-						]),
-					function () {
-						var resultSize = {
-							height: A2($author$project$Main$percent, 35, resultsColwidth),
-							width: resultsColwidth
-						};
-						if (orientation.$ === 'Landscape') {
-							return A2(
-								$elm$core$List$map,
-								$author$project$Main$viewCharacterResultHorizontal(resultSize),
-								charList);
-						} else {
-							return A2(
-								$elm$core$List$map,
-								$author$project$Main$viewCharacterResultVertical(resultSize.width),
-								charList);
-						}
-					}());
-			});
-		var paddingLeft = $mdgriffith$elm_ui$Element$paddingEach(
-			{
-				bottom: 0,
-				left: A2($author$project$Main$percent, 10, resultsPageSize.width),
-				right: 0,
-				top: A2($author$project$Main$percent, 5, resultsPageSize.height)
-			});
-		var paddingCenter = $mdgriffith$elm_ui$Element$paddingEach(
-			{
-				bottom: 0,
-				left: 0,
-				right: 0,
-				top: A2($author$project$Main$percent, 5, resultsPageSize.height)
-			});
-		var currentPage = function () {
-			var _v4 = $author$project$Main$getCurrentPage(model.route);
-			if (_v4.$ === 'Just') {
-				var pageNum = _v4.a;
-				return pageNum;
-			} else {
-				return 0;
-			}
-		}();
-		var _v0 = model.searchResult;
-		if (_v0.$ === 'CharacterSearch') {
-			var charRequest = _v0.a;
-			var _v1 = model.device.orientation;
-			if (_v1.$ === 'Landscape') {
-				var _v2 = model.device._class;
-				if (_v2.$ === 'Phone') {
-					return A2(
-						$mdgriffith$elm_ui$Element$el,
-						_List_fromArray(
-							[$mdgriffith$elm_ui$Element$centerX, paddingCenter]),
-						A3(
-							resultsColumn,
-							A2($author$project$Main$percent, 80, resultsPageSize.width),
-							$mdgriffith$elm_ui$Element$Landscape,
-							charRequest.results));
-				} else {
-					return A2(
-						$mdgriffith$elm_ui$Element$row,
-						_List_fromArray(
-							[$mdgriffith$elm_ui$Element$alignLeft, paddingLeft]),
-						_List_fromArray(
-							[
-								A3(
-								resultsColumn,
-								A2($author$project$Main$percent, 35, resultsPageSize.width),
-								$mdgriffith$elm_ui$Element$Landscape,
-								charRequest.results)
-							]));
-				}
-			} else {
-				var _v3 = model.device._class;
-				switch (_v3.$) {
-					case 'Phone':
-						return A2(
-							$mdgriffith$elm_ui$Element$el,
-							_List_fromArray(
-								[$mdgriffith$elm_ui$Element$centerX, paddingCenter]),
-							A3(
-								resultsColumn,
-								A2($author$project$Main$percent, 80, resultsPageSize.width),
-								$mdgriffith$elm_ui$Element$Portrait,
-								charRequest.results));
-					case 'Tablet':
-						return A2(
-							$mdgriffith$elm_ui$Element$el,
-							_List_fromArray(
-								[$mdgriffith$elm_ui$Element$centerX, paddingCenter]),
-							A3(
-								resultsColumn,
-								A2($author$project$Main$percent, 80, resultsPageSize.width),
-								$mdgriffith$elm_ui$Element$Landscape,
-								charRequest.results));
-					default:
-						return A2(
-							$mdgriffith$elm_ui$Element$row,
-							_List_fromArray(
-								[$mdgriffith$elm_ui$Element$alignLeft, paddingLeft]),
-							_List_fromArray(
-								[
-									A3(
-									resultsColumn,
-									A2($author$project$Main$percent, 35, resultsPageSize.width),
-									$mdgriffith$elm_ui$Element$Landscape,
-									charRequest.results)
-								]));
-				}
-			}
-		} else {
-			return $mdgriffith$elm_ui$Element$text('Something went wrong tetya');
-		}
-	});
-var $mdgriffith$elm_ui$Internal$Model$Navigation = {$: 'Navigation'};
-var $mdgriffith$elm_ui$Element$Region$navigation = $mdgriffith$elm_ui$Internal$Model$Describe($mdgriffith$elm_ui$Internal$Model$Navigation);
-var $mdgriffith$elm_ui$Internal$Model$Right = {$: 'Right'};
-var $mdgriffith$elm_ui$Element$alignRight = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Right);
 var $author$project$Main$viewTopBarButton = F2(
 	function (url, label) {
 		return A2(
@@ -19788,7 +20175,7 @@ var $author$project$Main$viewTopBarButton = F2(
 					$mdgriffith$elm_ui$Element$mouseOver(
 					_List_fromArray(
 						[
-							$mdgriffith$elm_ui$Element$Font$color($author$project$Main$green)
+							$mdgriffith$elm_ui$Element$Font$color($author$project$Palett$green)
 						]))
 				]),
 			{
@@ -19798,23 +20185,23 @@ var $author$project$Main$viewTopBarButton = F2(
 	});
 var $author$project$Main$viewTopBarSearch = F2(
 	function (searchBarContent, searchBarSize) {
-		var fontSize = A2($author$project$Main$percent, 60, searchBarSize.height);
+		var fontSize = A2($author$project$Palett$percent, 60, searchBarSize.height);
 		return A2(
 			$mdgriffith$elm_ui$Element$row,
 			_List_fromArray(
 				[
-					$mdgriffith$elm_ui$Element$Background$color($author$project$Main$black),
+					$mdgriffith$elm_ui$Element$Background$color($author$project$Palett$black),
 					$mdgriffith$elm_ui$Element$width(
 					$mdgriffith$elm_ui$Element$px(searchBarSize.width)),
 					$mdgriffith$elm_ui$Element$height(
 					$mdgriffith$elm_ui$Element$px(searchBarSize.height)),
 					$mdgriffith$elm_ui$Element$Border$rounded(
-					A2($author$project$Main$percent, 35, searchBarSize.height)),
+					A2($author$project$Palett$percent, 35, searchBarSize.height)),
 					$mdgriffith$elm_ui$Element$paddingEach(
 					{
 						bottom: 0,
-						left: A2($author$project$Main$percent, 20, searchBarSize.height),
-						right: A2($author$project$Main$percent, 25, searchBarSize.height),
+						left: A2($author$project$Palett$percent, 20, searchBarSize.height),
+						right: A2($author$project$Palett$percent, 25, searchBarSize.height),
 						top: 0
 					})
 				]),
@@ -19824,16 +20211,16 @@ var $author$project$Main$viewTopBarSearch = F2(
 					$mdgriffith$elm_ui$Element$Input$search,
 					_List_fromArray(
 						[
-							$mdgriffith$elm_ui$Element$Background$color($author$project$Main$black),
+							$mdgriffith$elm_ui$Element$Background$color($author$project$Palett$black),
 							$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
 							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
-							$mdgriffith$elm_ui$Element$Font$color($author$project$Main$white),
-							$author$project$Main$noFocusShadow,
+							$mdgriffith$elm_ui$Element$Font$color($author$project$Palett$white),
+							$author$project$Palett$noFocusShadow,
 							$mdgriffith$elm_ui$Element$Border$width(0),
 							$mdgriffith$elm_ui$Element$padding(((searchBarSize.height - fontSize) / 2) | 0),
 							$mdgriffith$elm_ui$Element$Font$size(fontSize),
 							$mdgriffith$elm_ui$Element$Border$rounded(
-							A2($author$project$Main$percent, 50, searchBarSize.height)),
+							A2($author$project$Palett$percent, 50, searchBarSize.height)),
 							$mdgriffith$elm_ui$Element$Events$onFocus($author$project$Main$SearchBarGetsFocus),
 							$mdgriffith$elm_ui$Element$Events$onLoseFocus($author$project$Main$SearchBarLosesFocus)
 						]),
@@ -19850,10 +20237,10 @@ var $author$project$Main$viewTopBarSearch = F2(
 							$mdgriffith$elm_ui$Element$Background$uncropped('Images/blue_search_icon.png'),
 							$mdgriffith$elm_ui$Element$height(
 							$mdgriffith$elm_ui$Element$px(
-								A2($author$project$Main$percent, 80, searchBarSize.height))),
+								A2($author$project$Palett$percent, 80, searchBarSize.height))),
 							$mdgriffith$elm_ui$Element$width(
 							$mdgriffith$elm_ui$Element$px(
-								A2($author$project$Main$percent, 80, searchBarSize.height))),
+								A2($author$project$Palett$percent, 80, searchBarSize.height))),
 							$mdgriffith$elm_ui$Element$alignRight
 						]),
 					A2(
@@ -19862,7 +20249,7 @@ var $author$project$Main$viewTopBarSearch = F2(
 							[
 								$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 								$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
-								$author$project$Main$noFocusShadow
+								$author$project$Palett$noFocusShadow
 							]),
 						{
 							label: $mdgriffith$elm_ui$Element$none,
@@ -19898,12 +20285,12 @@ var $author$project$Main$viewTopBar = F4(
 					_List_fromArray(
 						[$mdgriffith$elm_ui$Element$alignLeft]),
 					function () {
-						var searchBarWidth = A2($author$project$Main$percent, 30, topBarSize.width);
-						var searchBarHeight = A2($author$project$Main$percent, 80, topBarSize.height);
+						var searchBarWidth = A2($author$project$Palett$percent, 30, topBarSize.width);
+						var searchBarHeight = A2($author$project$Palett$percent, 80, topBarSize.height);
 						return A2(
 							$author$project$Main$viewTopBarSearch,
 							searchBarContent,
-							A2($author$project$Main$WindowSize, searchBarWidth, searchBarHeight));
+							A2($author$project$Palett$WindowSize, searchBarWidth, searchBarHeight));
 					}());
 			}
 		};
@@ -19911,22 +20298,22 @@ var $author$project$Main$viewTopBar = F4(
 			$mdgriffith$elm_ui$Element$row,
 			_List_fromArray(
 				[
-					$mdgriffith$elm_ui$Element$Background$color($author$project$Main$white),
+					$mdgriffith$elm_ui$Element$Background$color($author$project$Palett$white),
 					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 					$mdgriffith$elm_ui$Element$height(
 					$mdgriffith$elm_ui$Element$px(topBarSize.height)),
 					$mdgriffith$elm_ui$Element$paddingEach(
 					{
 						bottom: 0,
-						left: A2($author$project$Main$percent, 8, topBarSize.width),
-						right: A2($author$project$Main$percent, 2, topBarSize.width),
+						left: A2($author$project$Palett$percent, 8, topBarSize.width),
+						right: A2($author$project$Palett$percent, 2, topBarSize.width),
 						top: 0
 					}),
-					$mdgriffith$elm_ui$Element$Font$color($author$project$Main$black),
+					$mdgriffith$elm_ui$Element$Font$color($author$project$Palett$black),
 					$mdgriffith$elm_ui$Element$spacing(
-					A2($author$project$Main$percent, 30, topBarSize.height)),
+					A2($author$project$Palett$percent, 30, topBarSize.height)),
 					$mdgriffith$elm_ui$Element$Font$size(
-					A2($author$project$Main$percent, 43, topBarSize.height)),
+					A2($author$project$Palett$percent, 43, topBarSize.height)),
 					$mdgriffith$elm_ui$Element$Region$navigation
 				]),
 			_List_fromArray(
@@ -19947,18 +20334,18 @@ var $author$project$Main$view = function (model) {
 					$mdgriffith$elm_ui$Element$column,
 					_List_fromArray(
 						[
-							$mdgriffith$elm_ui$Element$Background$color($author$project$Main$black),
+							$mdgriffith$elm_ui$Element$Background$color($author$project$Palett$black),
 							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
 							$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
-							$mdgriffith$elm_ui$Element$Font$color($author$project$Main$white)
+							$mdgriffith$elm_ui$Element$Font$color($author$project$Palett$white)
 						]),
 					function () {
-						var topBarHeight = A2($author$project$Main$percent, 7, model.windowSize.height);
+						var topBarHeight = A2($author$project$Palett$percent, 7, model.windowSize.height);
 						return _List_fromArray(
 							[
 								A4(
 								$author$project$Main$viewTopBar,
-								A2($author$project$Main$setWindowHeightPx, topBarHeight, model.windowSize),
+								A2($author$project$Palett$setWindowHeightPx, topBarHeight, model.windowSize),
 								model.device,
 								model.route,
 								model.searchBarContent),
@@ -19968,16 +20355,19 @@ var $author$project$Main$view = function (model) {
 									case 'Home':
 										return A3(
 											$author$project$Main$viewHomePage,
-											A2($author$project$Main$setWindowHeightPx, model.windowSize.height - topBarHeight, model.windowSize),
+											A2($author$project$Palett$setWindowHeightPx, model.windowSize.height - topBarHeight, model.windowSize),
 											model.device,
 											model.searchBarContent);
 									case 'About':
 										return $author$project$Main$viewAboutPage(model);
 									case 'SearchResultsPage':
 										return A2(
-											$author$project$Main$viewResultsPage,
-											A2($author$project$Main$setWindowHeightPx, model.windowSize.height - topBarHeight, model.windowSize),
-											model);
+											$mdgriffith$elm_ui$Element$map,
+											$author$project$Main$ResultsPageMsg,
+											A2(
+												$author$project$ResultsPage$viewResultsPage,
+												A2($author$project$Palett$setWindowHeightPx, model.windowSize.height - topBarHeight, model.windowSize),
+												model));
 									case 'NotFound':
 										return $mdgriffith$elm_ui$Element$text('page not found');
 									default:
@@ -19987,7 +20377,7 @@ var $author$project$Main$view = function (model) {
 								}
 							}(),
 								$author$project$Main$viewFooter(
-								A2($author$project$Main$setWindowHeightPc, 1.5, model.windowSize))
+								A2($author$project$Palett$setWindowHeightPc, 1.5, model.windowSize))
 							]);
 					}()))
 			]),
@@ -19996,4 +20386,4 @@ var $author$project$Main$view = function (model) {
 };
 var $author$project$Main$main = $elm$browser$Browser$application(
 	{init: $author$project$Main$init, onUrlChange: $author$project$Main$UrlChange, onUrlRequest: $author$project$Main$UrlRequest, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
-_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Main.Character":{"args":[],"type":"{ id : Basics.Int, name : String.String, status : Main.Status, species : String.String, subType : String.String, gender : String.String, origin : Main.CharacterOriginLocation, location : Main.CharacterOriginLocation, image : String.String, episode : List.List String.String, url : String.String }"},"Main.CharacterOriginLocation":{"args":[],"type":"{ name : String.String, url : String.String }"},"Main.CharacterRequest":{"args":[],"type":"{ info : Main.RequestInfo, results : List.List Main.Character }"},"Main.RequestInfo":{"args":[],"type":"{ count : Basics.Int, pages : Basics.Int, next : Maybe.Maybe String.String, prev : Maybe.Maybe String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"WindowResized":["Basics.Int","Basics.Int"],"SearchBarChanged":["String.String"],"SearchButtonPressed":[],"GotCharacterSearchResult":["String.String","Result.Result Http.Error Main.CharacterRequest"],"GotSingleCharacter":["Result.Result Http.Error Main.Character"],"SearchBarGetsFocus":[],"SearchBarLosesFocus":[],"KeyPress":["Main.Key"],"GoToResultsPage":["Main.Navigate"],"NoOp":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Main.Key":{"args":[],"tags":{"Enter":[],"NonEnter":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"Main.Navigate":{"args":[],"tags":{"Next":[],"Prev":[],"PageNum":["Basics.Int"]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Main.Status":{"args":[],"tags":{"Alive":[],"Dead":[],"Unknown":[],"InvalidStatus":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}}}}})}});}(this));
+_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Character.Character":{"args":[],"type":"{ id : Basics.Int, name : String.String, status : Character.Status, species : String.String, subType : String.String, gender : String.String, origin : Character.CharacterOriginLocation, location : Character.CharacterOriginLocation, image : String.String, episode : List.List String.String, url : String.String }"},"Character.CharacterOriginLocation":{"args":[],"type":"{ name : String.String, url : String.String }"},"Character.CharacterRequest":{"args":[],"type":"{ info : Character.RequestInfo, results : List.List Character.Character }"},"Character.RequestInfo":{"args":[],"type":"{ count : Basics.Int, pages : Basics.Int, next : Maybe.Maybe String.String, prev : Maybe.Maybe String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"WindowResized":["Basics.Int","Basics.Int"],"SearchBarChanged":["String.String"],"SearchButtonPressed":[],"GotCharacterSearchResult":["String.String","Result.Result Http.Error Character.CharacterRequest"],"GotSingleCharacter":["Result.Result Http.Error Character.Character"],"SearchBarGetsFocus":[],"SearchBarLosesFocus":[],"KeyPress":["Main.Key"],"ResultsPageMsg":["ResultsPage.Msg"],"NoOp":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Main.Key":{"args":[],"tags":{"Enter":[],"NonEnter":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"ResultsPage.Msg":{"args":[],"tags":{"GoToResultsPage":["ResultsPage.Navigate"],"ShowCharacterInfo":["Character.Character"],"NoOp":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Character.Status":{"args":[],"tags":{"Alive":[],"Dead":[],"Unknown":[],"InvalidStatus":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"ResultsPage.Navigate":{"args":[],"tags":{"Next":[],"Prev":[],"PageNum":["Basics.Int"]}}}}})}});}(this));
