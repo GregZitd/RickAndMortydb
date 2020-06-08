@@ -11633,6 +11633,7 @@ var $author$project$Main$init = F3(
 			device: {_class: $mdgriffith$elm_ui$Element$Tablet, orientation: $mdgriffith$elm_ui$Element$Landscape},
 			key: key,
 			route: $author$project$Main$toRoute(url),
+			scrollPos: 0,
 			searchBarContent: '',
 			searchBarFocused: false,
 			searchResult: $author$project$ResultsPage$NoSearchInitiated,
@@ -11660,6 +11661,9 @@ var $author$project$Main$init = F3(
 			return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 		}
 	});
+var $author$project$Main$ScrollPosChange = function (a) {
+	return {$: 'ScrollPosChange', a: a};
+};
 var $author$project$Main$WindowResized = F2(
 	function (a, b) {
 		return {$: 'WindowResized', a: a, b: b};
@@ -11681,6 +11685,7 @@ var $author$project$Main$keyDecoder = A2(
 	$elm$json$Json$Decode$map,
 	$author$project$Main$toKey,
 	A2($elm$json$Json$Decode$field, 'key', $elm$json$Json$Decode$string));
+var $author$project$Main$messageReciever = _Platform_incomingPort('messageReciever', $elm$json$Json$Decode$int);
 var $elm$browser$Browser$Events$Document = {$: 'Document'};
 var $elm$browser$Browser$Events$MySub = F3(
 	function (a, b, c) {
@@ -11873,7 +11878,8 @@ var $author$project$Main$subscriptions = function (model) {
 		_List_fromArray(
 			[
 				$elm$browser$Browser$Events$onResize($author$project$Main$WindowResized),
-				$elm$browser$Browser$Events$onKeyPress($author$project$Main$keyDecoder)
+				$elm$browser$Browser$Events$onKeyPress($author$project$Main$keyDecoder),
+				$author$project$Main$messageReciever($author$project$Main$ScrollPosChange)
 			]));
 };
 var $author$project$ResultsPage$CharacterSearch = function (a) {
@@ -12171,8 +12177,15 @@ var $author$project$Main$update = F2(
 				return _Utils_Tuple2(
 					newModel,
 					A2($elm$core$Platform$Cmd$map, $author$project$Main$ResultsPageMsg, newMsg));
-			default:
+			case 'NoOp':
 				return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
+			default:
+				var newPos = msg.a;
+				return _Utils_Tuple2(
+					_Utils_update(
+						model,
+						{scrollPos: newPos}),
+					$elm$core$Platform$Cmd$none);
 		}
 	});
 var $mdgriffith$elm_ui$Internal$Model$Rgba = F4(
@@ -19456,6 +19469,45 @@ var $author$project$Main$viewHomePage = F3(
 	});
 var $mdgriffith$elm_ui$Internal$Model$Left = {$: 'Left'};
 var $mdgriffith$elm_ui$Element$alignLeft = $mdgriffith$elm_ui$Internal$Model$AlignX($mdgriffith$elm_ui$Internal$Model$Left);
+var $mdgriffith$elm_ui$Internal$Model$Top = {$: 'Top'};
+var $mdgriffith$elm_ui$Element$alignTop = $mdgriffith$elm_ui$Internal$Model$AlignY($mdgriffith$elm_ui$Internal$Model$Top);
+var $author$project$ResultsPage$viewCharacterDetails = F2(
+	function (padding, currentChar) {
+		var info = function () {
+			if (currentChar.$ === 'Nothing') {
+				return $mdgriffith$elm_ui$Element$none;
+			} else {
+				var _char = currentChar.a;
+				return A2(
+					$mdgriffith$elm_ui$Element$el,
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$width(
+							$mdgriffith$elm_ui$Element$px(200)),
+							$mdgriffith$elm_ui$Element$height(
+							$mdgriffith$elm_ui$Element$px(200)),
+							$mdgriffith$elm_ui$Element$Background$color($author$project$Palett$white),
+							$mdgriffith$elm_ui$Element$alignTop,
+							$mdgriffith$elm_ui$Element$centerX,
+							$mdgriffith$elm_ui$Element$Font$color($author$project$Palett$black)
+						]),
+					$mdgriffith$elm_ui$Element$none);
+			}
+		}();
+		return A2(
+			$mdgriffith$elm_ui$Element$el,
+			_List_fromArray(
+				[
+					$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+					$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
+					$mdgriffith$elm_ui$Element$centerX,
+					$mdgriffith$elm_ui$Element$htmlAttribute(
+					$elm$html$Html$Attributes$id('character-details-panel')),
+					$mdgriffith$elm_ui$Element$paddingEach(
+					{bottom: 0, left: 0, right: 0, top: padding})
+				]),
+			info);
+	});
 var $author$project$Palett$grey = A3($mdgriffith$elm_ui$Element$rgb255, 105, 105, 105);
 var $mdgriffith$elm_ui$Element$Border$roundEach = function (_v0) {
 	var topLeft = _v0.topLeft;
@@ -19474,8 +19526,6 @@ var $mdgriffith$elm_ui$Element$Border$roundEach = function (_v0) {
 var $author$project$ResultsPage$ShowCharacterInfo = function (a) {
 	return {$: 'ShowCharacterInfo', a: a};
 };
-var $mdgriffith$elm_ui$Internal$Model$Top = {$: 'Top'};
-var $mdgriffith$elm_ui$Element$alignTop = $mdgriffith$elm_ui$Internal$Model$AlignY($mdgriffith$elm_ui$Internal$Model$Top);
 var $mdgriffith$elm_ui$Internal$Model$Hover = {$: 'Hover'};
 var $mdgriffith$elm_ui$Internal$Flag$hover = $mdgriffith$elm_ui$Internal$Flag$flag(33);
 var $mdgriffith$elm_ui$Element$mouseOver = function (decs) {
@@ -19981,8 +20031,8 @@ var $author$project$ResultsPage$viewPageNavigation = F4(
 							[nextButton]))));
 		}
 	});
-var $author$project$ResultsPage$viewCharacterSearchResults = F4(
-	function (resultsPageSize, device, pageNum, charRequest) {
+var $author$project$ResultsPage$viewCharacterSearchResults = F6(
+	function (resultsPageSize, device, pageNum, charRequest, currentCharacter, detailedInfoPadding) {
 		var resultsColumn = F3(
 			function (resultsColwidth, orientation, charList) {
 				return A2(
@@ -20053,14 +20103,18 @@ var $author$project$ResultsPage$viewCharacterSearchResults = F4(
 							return A2(
 								$mdgriffith$elm_ui$Element$row,
 								_List_fromArray(
-									[$mdgriffith$elm_ui$Element$alignLeft, paddingLeft]),
+									[
+										paddingLeft,
+										$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill)
+									]),
 								_List_fromArray(
 									[
 										A3(
 										resultsColumn,
 										A2($author$project$Palett$percent, 35, resultsPageSize.width),
 										$mdgriffith$elm_ui$Element$Landscape,
-										charRequest.results)
+										charRequest.results),
+										A2($author$project$ResultsPage$viewCharacterDetails, detailedInfoPadding, currentCharacter)
 									]));
 						}
 					} else {
@@ -20126,7 +20180,14 @@ var $author$project$ResultsPage$viewResultsPage = F2(
 				return $mdgriffith$elm_ui$Element$text('How did you get here?');
 			case 'CharacterSearch':
 				var charRequest = _v0.a;
-				return A4($author$project$ResultsPage$viewCharacterSearchResults, resultsPageSize, model.device, model.currentPage, charRequest);
+				return A6(
+					$author$project$ResultsPage$viewCharacterSearchResults,
+					resultsPageSize,
+					model.device,
+					model.currentPage,
+					charRequest,
+					model.currentCharacterOnShow,
+					A2($elm$core$Basics$max, 0, model.scrollPos - 50));
 			default:
 				return $mdgriffith$elm_ui$Element$text('This page is not implemented yet');
 		}
@@ -20386,4 +20447,4 @@ var $author$project$Main$view = function (model) {
 };
 var $author$project$Main$main = $elm$browser$Browser$application(
 	{init: $author$project$Main$init, onUrlChange: $author$project$Main$UrlChange, onUrlRequest: $author$project$Main$UrlRequest, subscriptions: $author$project$Main$subscriptions, update: $author$project$Main$update, view: $author$project$Main$view});
-_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Character.Character":{"args":[],"type":"{ id : Basics.Int, name : String.String, status : Character.Status, species : String.String, subType : String.String, gender : String.String, origin : Character.CharacterOriginLocation, location : Character.CharacterOriginLocation, image : String.String, episode : List.List String.String, url : String.String }"},"Character.CharacterOriginLocation":{"args":[],"type":"{ name : String.String, url : String.String }"},"Character.CharacterRequest":{"args":[],"type":"{ info : Character.RequestInfo, results : List.List Character.Character }"},"Character.RequestInfo":{"args":[],"type":"{ count : Basics.Int, pages : Basics.Int, next : Maybe.Maybe String.String, prev : Maybe.Maybe String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"WindowResized":["Basics.Int","Basics.Int"],"SearchBarChanged":["String.String"],"SearchButtonPressed":[],"GotCharacterSearchResult":["String.String","Result.Result Http.Error Character.CharacterRequest"],"GotSingleCharacter":["Result.Result Http.Error Character.Character"],"SearchBarGetsFocus":[],"SearchBarLosesFocus":[],"KeyPress":["Main.Key"],"ResultsPageMsg":["ResultsPage.Msg"],"NoOp":[]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Main.Key":{"args":[],"tags":{"Enter":[],"NonEnter":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"ResultsPage.Msg":{"args":[],"tags":{"GoToResultsPage":["ResultsPage.Navigate"],"ShowCharacterInfo":["Character.Character"],"NoOp":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Character.Status":{"args":[],"tags":{"Alive":[],"Dead":[],"Unknown":[],"InvalidStatus":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"ResultsPage.Navigate":{"args":[],"tags":{"Next":[],"Prev":[],"PageNum":["Basics.Int"]}}}}})}});}(this));
+_Platform_export({'Main':{'init':$author$project$Main$main($elm$json$Json$Decode$value)({"versions":{"elm":"0.19.1"},"types":{"message":"Main.Msg","aliases":{"Character.Character":{"args":[],"type":"{ id : Basics.Int, name : String.String, status : Character.Status, species : String.String, subType : String.String, gender : String.String, origin : Character.CharacterOriginLocation, location : Character.CharacterOriginLocation, image : String.String, episode : List.List String.String, url : String.String }"},"Character.CharacterOriginLocation":{"args":[],"type":"{ name : String.String, url : String.String }"},"Character.CharacterRequest":{"args":[],"type":"{ info : Character.RequestInfo, results : List.List Character.Character }"},"Character.RequestInfo":{"args":[],"type":"{ count : Basics.Int, pages : Basics.Int, next : Maybe.Maybe String.String, prev : Maybe.Maybe String.String }"},"Url.Url":{"args":[],"type":"{ protocol : Url.Protocol, host : String.String, port_ : Maybe.Maybe Basics.Int, path : String.String, query : Maybe.Maybe String.String, fragment : Maybe.Maybe String.String }"}},"unions":{"Main.Msg":{"args":[],"tags":{"UrlChange":["Url.Url"],"UrlRequest":["Browser.UrlRequest"],"WindowResized":["Basics.Int","Basics.Int"],"SearchBarChanged":["String.String"],"SearchButtonPressed":[],"GotCharacterSearchResult":["String.String","Result.Result Http.Error Character.CharacterRequest"],"GotSingleCharacter":["Result.Result Http.Error Character.Character"],"SearchBarGetsFocus":[],"SearchBarLosesFocus":[],"KeyPress":["Main.Key"],"ResultsPageMsg":["ResultsPage.Msg"],"NoOp":[],"ScrollPosChange":["Basics.Int"]}},"Http.Error":{"args":[],"tags":{"BadUrl":["String.String"],"Timeout":[],"NetworkError":[],"BadStatus":["Basics.Int"],"BadBody":["String.String"]}},"Basics.Int":{"args":[],"tags":{"Int":[]}},"Main.Key":{"args":[],"tags":{"Enter":[],"NonEnter":[]}},"List.List":{"args":["a"],"tags":{}},"Maybe.Maybe":{"args":["a"],"tags":{"Just":["a"],"Nothing":[]}},"ResultsPage.Msg":{"args":[],"tags":{"GoToResultsPage":["ResultsPage.Navigate"],"ShowCharacterInfo":["Character.Character"],"NoOp":[]}},"Url.Protocol":{"args":[],"tags":{"Http":[],"Https":[]}},"Result.Result":{"args":["error","value"],"tags":{"Ok":["value"],"Err":["error"]}},"Character.Status":{"args":[],"tags":{"Alive":[],"Dead":[],"Unknown":[],"InvalidStatus":[]}},"String.String":{"args":[],"tags":{"String":[]}},"Browser.UrlRequest":{"args":[],"tags":{"Internal":["Url.Url"],"External":["String.String"]}},"ResultsPage.Navigate":{"args":[],"tags":{"Next":[],"Prev":[],"PageNum":["Basics.Int"]}}}}})}});}(this));

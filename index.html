@@ -13,7 +13,13 @@
     var app = Elm.Main.init({
       node: document.getElementById('myapp'),
       flags: {width: window.innerWidth, height: window.innerHeight}
-  });
+    });
+
+    window.onscroll = function() {myFunction()};
+
+    function myFunction() {
+	app.ports.messageReciever.send(scrollY)
+    }
   </script>
 </body>
 </html>

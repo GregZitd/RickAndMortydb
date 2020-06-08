@@ -14,6 +14,9 @@ import Browser.Dom as Dom
 import Http
 import Task
 import Url.Builder as UB
+import Animator as A
+import Animator.Inline as AI
+import Time
 
 
 import Palett exposing (..)
@@ -23,7 +26,8 @@ type alias Result a =
     { a | currentPage : Int
         , currentSearchTerm : String
         , searchResult : SearchResult
-        , currentCharacterOnShow : Maybe Character 
+        , currentCharacterOnShow : Maybe Character
+        , scrollPos : Int
 
         , key : Nav.Key
         , device : Device
@@ -40,7 +44,7 @@ type Msg =
       GoToResultsPage Navigate
     | ShowCharacterInfo Character
     | NoOp
-
+    
 update : Msg -> (Result model) -> (Result model, Cmd Msg)
 update msg model =
     case model.searchResult of
@@ -98,7 +102,7 @@ update msg model =
                     ( { model | currentCharacterOnShow = Just character }
                     , Cmd.none
                     )
-
+                                
         _ -> (model, Cmd.none)
 
 modelToUrl : String -> Int -> String
@@ -116,19 +120,44 @@ viewResultsPage resultsPageSize model =
         CharacterSearch charRequest ->
             viewCharacterSearchResults
                 resultsPageSize
-                model.device
-                model.currentPage
-                charRequest
+                    model.device
+                    model.currentPage
+                    charRequest
+                    model.currentCharacterOnShow
+                    (max 0 (model.scrollPos - 50) )
         _ -> text "This page is not implemented yet"
 
-viewCharacterSearchResults : WindowSize -> Device -> Int -> CharacterRequest -> Element Msg
-viewCharacterSearchResults resultsPageSize device pageNum charRequest =
-    let {-currentPage =
-            case getCurrentPage model.route of
-                Just pageNum -> pageNum
-                Nothing -> 0-}
-        
-        paddingCenter =
+viewCharacterDetails :Int ->  Maybe Character -> Element Msg
+viewCharacterDetails padding currentChar =
+    let info =
+          case currentChar of
+              Nothing -> none
+              Just char ->
+                  el
+                    [ width <| px 200
+                    , height <| px 200
+                    , Background.color white
+                    , alignTop
+                    , centerX
+                    , Font.color black
+                    ]
+                    none
+    in  el
+           -- { options = [ noStaticStyleSheet ] }
+            [-- htmlAttribute (Html.Attributes.style "position" "fixed") 
+            -- explain Debug.todo
+             width fill
+            , height fill
+            , centerX
+            , htmlAttribute <| Html.Attributes.id "character-details-panel"
+            , paddingEach { top = padding, bottom = 0, right = 0, left = 0 }
+            ]
+            info
+
+viewCharacterSearchResults : WindowSize -> Device -> Int -> CharacterRequest
+                           -> Maybe Character -> Int -> Element Msg
+viewCharacterSearchResults resultsPageSize device pageNum charRequest currentCharacter detailedInfoPadding =
+    let paddingCenter =
             paddingEach
                { top = percent 5 resultsPageSize.height
                , bottom = 0, left = 0, right = 0
@@ -146,7 +175,6 @@ viewCharacterSearchResults resultsPageSize device pageNum charRequest =
               [ 
                spacing (percent 2 resultsPageSize.height)
               , Region.mainContent
-              --, explain Debug.todo
               ] <|
                   let resultSize =
                           { width = resultsColwidth
@@ -183,13 +211,15 @@ viewCharacterSearchResults resultsPageSize device pageNum charRequest =
                                        charRequest.results
                             _ ->
                                 row
-                                  [ alignLeft
-                                  , paddingLeft
+                                  [ paddingLeft
+                                  , width fill
+                                  --, explain Debug.todo
                                   ]
                                   [ resultsColumn
                                         (percent 35 resultsPageSize.width)
                                         Landscape
                                         charRequest.results
+                                  , viewCharacterDetails detailedInfoPadding currentCharacter
                                   ]
                     Portrait ->
                         case device.class of
@@ -442,3 +472,4 @@ statusToString status =
 resetViewport : Cmd Msg
 resetViewport =
     Task.perform (\_ -> NoOp) (Dom.setViewport 0 0)
+

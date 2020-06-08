@@ -1,4 +1,4 @@
-module Main exposing (..)
+port module Main exposing (..)
 
 import Browser
 import Browser.Events
@@ -14,6 +14,8 @@ import Json.Encode as E
 import Json.Decode.Pipeline as DP exposing (required, optional)
 import Html
 import Html.Attributes
+import Animator as A
+import Animator.Inline as AI
 import Element exposing (..)
 import Element.Background as Background
 import Element.Font as Font
@@ -45,16 +47,17 @@ type alias Model =
     , windowSize : WindowSize
     , route : Route
     , searchBarContent : String
-      -- , lastRequestSent : String
     , searchBarFocused : Bool
-   -- , resultsPageModel : Maybe ResultsPage.Model
+   
     --Result
     , searchResult : SearchResult
     , currentSearchTerm : String
     , currentPage : Int
-    , currentCharacterOnShow : Maybe Character
+    , currentCharacterOnShow :Maybe Character
+    , scrollPos : Int
     }
 
+port messageReciever : (Int -> msg) -> Sub msg
 
 -- ROUTE PARSING
 
@@ -104,6 +107,7 @@ init flags url key =
             , currentPage = 0
             , searchBarFocused = False
             , currentCharacterOnShow = Nothing
+            , scrollPos = 0
             }
 
     in case D.decodeValue decodeFlags flags of
@@ -154,6 +158,7 @@ type Msg =
     | KeyPress Key
     | ResultsPageMsg ResultsPage.Msg
     | NoOp
+    | ScrollPosChange Int
      
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -240,6 +245,10 @@ update msg model =
         NoOp ->
             ( model, Cmd.none )
                            
+        ScrollPosChange newPos ->
+            ( { model | scrollPos = newPos }
+            , Cmd.none
+            )
 
 
 
@@ -303,6 +312,7 @@ subscriptions model =
     Sub.batch
         [ Browser.Events.onResize WindowResized
         , Browser.Events.onKeyPress keyDecoder
+        , messageReciever ScrollPosChange
         ]
 
 keyDecoder : D.Decoder Msg
